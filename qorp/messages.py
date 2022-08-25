@@ -18,7 +18,7 @@ class Message(ABC):
 @dataclass
 class Data(Message):
 
-    data: bytes
+    payload: bytes
 
 
 @dataclass
