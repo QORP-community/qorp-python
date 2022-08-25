@@ -29,3 +29,8 @@ class RouteRequest(Message):
 @dataclass
 class RouteResponse(Message):
     pass
+
+
+@dataclass
+class RouteError(Message):
+    pass
