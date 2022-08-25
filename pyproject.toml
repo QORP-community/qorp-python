@@ -2,8 +2,15 @@
 name = "qorp"
 version = "0.0.1"
 description = "QORP implementation written in python."
+readme = "README.md"
 authors = ["jorektheglitch <jorektheglitch@yandex.ru>"]
 license = "MIT"
+repository = "https://github.com/jorektheglitch/qorp-python"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Topic :: Internet",
+    "Topic :: System :: Networking"
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
