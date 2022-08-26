@@ -55,8 +55,8 @@ class Router(Node):
                 direction = self.directions[target]
                 direction.send(message)
             else:
-                # TODO: send back RouteError
-                pass
+                rerr = RouteError(self, source)
+                source.send(rerr)
         elif isinstance(message, RouteRequest):
             target = message.destination
             requests = self.pending_requests.setdefault(target, set())
