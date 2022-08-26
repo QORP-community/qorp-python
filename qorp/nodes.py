@@ -42,3 +42,4 @@ class Neighbour(Node):
         """
         Sends message to neighbour using one of neighbour's transporters.
         """
+        # TODO: implement selecting and using transporter from transporters set
