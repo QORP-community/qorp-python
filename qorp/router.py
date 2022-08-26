@@ -45,7 +45,7 @@ class Router(Node):
         finally:
             requests.remove(future)
 
-    def network_message_callback(self, message: Message):
+    def network_message_callback(self, source: Neighbour, message: Message):
         direction: Optional[Neighbour]
         if isinstance(message, Data):
             target = message.destination
