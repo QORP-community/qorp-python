@@ -13,6 +13,7 @@ from .transports import Listener
 
 
 RREQ_TIMEOUT = 10
+EMPTY_SET: Set = set()
 
 
 class Router(Node):
@@ -70,6 +71,9 @@ class Router(Node):
                 has_pending_requests = bool(requests)
                 future: Future[Neighbour] = Future()
                 future.add_done_callback(self._done_request(target))
+                loop = asyncio.get_running_loop()
+                ttl_kill = self._rreq_ttl_killer(target, future)
+                loop.call_later(RREQ_TIMEOUT, ttl_kill)
                 requests.add(future)
                 if not has_pending_requests:
                     for neighbour in self.neighbours:
@@ -90,6 +94,15 @@ class Router(Node):
     def frontend_message_callback(self, message: Data):
         # TODO: write frontend-originated data message processing code
         pass
+
+    def _rreq_ttl_killer(self, target: Node, future: Future):
+        def callback():
+            futures = self.pending_requests.get(target, EMPTY_SET)
+            if future in futures:
+                futures.remove(future)
+            if not future.done():
+                future.cancel()
+        return callback
 
     def _done_request(self, target: Node) -> Callable[["Future[Neighbour]"], None]:
         def callback(future: "Future[Neighbour]"):
