@@ -62,7 +62,10 @@ class Router(Node):
             requests = self.pending_requests.setdefault(target, set())
             future: Future[Neighbour] = Future()
             future.add_done_callback(self._done_request(target))
-            # TODO: resend RouteRequest to all neighbours except source
+            for neighbour in self.neighbours:
+                if neighbour == source:
+                    continue
+                neighbour.send(message)
             requests.add(future)
         elif isinstance(message, RouteResponse):
             target = message.destination
