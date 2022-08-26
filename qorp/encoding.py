@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+
 from typing import Callable
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .messages import Message
-
 
 
 class Encoder(ABC, Callable[["Message"], bytes]):
