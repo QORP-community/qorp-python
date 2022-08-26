@@ -1,3 +1,7 @@
+"""
+Module for definitions of each message type's structure.
+"""
+
 from __future__ import annotations
 
 from abc import ABC
@@ -10,6 +14,9 @@ if TYPE_CHECKING:
 
 @dataclass
 class Message(ABC):
+    """
+    Base class for all protocol messages.
+    """
 
     source: Node
     destination: Node
@@ -17,20 +24,41 @@ class Message(ABC):
 
 @dataclass
 class Data(Message):
+    """
+    Data message used to transfer payload to other nodes. Typically
+    payload is some higher-layer protocol message.
+    """
 
     payload: bytes
 
 
 @dataclass
 class RouteRequest(Message):
-    pass
+    """
+    Route Request (RReq) message used to obtain route to other node of the
+    network.
+    
+    RReq propagates over the entire network until it reaches destination
+    node, which responds with Route Response message.
+
+    Propagation process for RReq messages must use `split horizon` technique
+    to prevent broadcast storms in the network.
+    """
 
 
 @dataclass
 class RouteResponse(Message):
-    pass
+    """
+    Route Response (RRep) message used to reply to RReq message.
+    """
 
 
 @dataclass
 class RouteError(Message):
-    pass
+    """
+    Route Error (RErr) message used to signal that some route over this node
+    becomes invalid (due to any reason).
+
+    RErr messages must be sended back right to route source node over the all
+    nodes in the current node.
+    """

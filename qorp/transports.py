@@ -28,15 +28,31 @@ Proto = TypeVar("Proto", bound=Protocol)
 
 
 class Transporter(ABC, Generic[Proto]):
+    """
+    Wrapper around unidirectional link to some network.
+
+    `encoder` is encoding.Encoder instance for serialize messages after
+    sending.
+    """
 
     encoder: Encoder
 
     @abstractmethod
     def send(self, message: Message):
-        pass
+        """
+        Sends message through specific transport.
+        """
 
 
 class Listener(ABC, Generic[Proto]):
+    """
+    Wrapper around unidirectional link from some network.
+
+    `callback` is a callback function which must be called on each message
+    that listener fetches from the network.
+
+    `decoder` is encoding.Decoder instance for deserialize received messages.
+    """
 
     callback: Callable[[Message], None]
     decoder: Decoder

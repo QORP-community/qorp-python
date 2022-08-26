@@ -7,6 +7,9 @@ if TYPE_CHECKING:
 
 
 class Encoder(ABC, Callable[["Message"], bytes]):
+    """
+    Base class for messages encoders.
+    """
 
     @abstractmethod
     def __call__(self, message: "Message") -> bytes:
@@ -14,6 +17,9 @@ class Encoder(ABC, Callable[["Message"], bytes]):
 
 
 class Decoder(ABC, Callable[[bytes], "Message"]):
+    """
+    Base class for messages decoders.
+    """
 
     @abstractmethod
     def __call__(self, data: bytes) -> "Message":
