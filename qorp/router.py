@@ -106,11 +106,12 @@ class Router(Node):
 
     def _done_request(self, target: Node) -> Callable[["Future[Neighbour]"], None]:
         def callback(future: "Future[Neighbour]"):
-            futures = self.pending_requests.get(target)
-            if futures and future in futures:
+            futures = self.pending_requests.get(target, EMPTY_SET)
+            if future in futures:
                 futures.remove(future)
-                if future.done() and not future.cancelled():
-                    direction = future.result()
-                    for future in futures:
-                        future.set_result(direction)
+            if future.done() and not (future.cancelled() or future.exception()):
+                direction = future.result()
+                self.directions.setdefault(target, direction)
+                for future in futures:
+                    future.set_result(direction)
         return callback
