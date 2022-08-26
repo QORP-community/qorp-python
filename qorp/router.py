@@ -59,14 +59,23 @@ class Router(Node):
                 source.send(rerr)
         elif isinstance(message, RouteRequest):
             target = message.destination
-            requests = self.pending_requests.setdefault(target, set())
-            future: Future[Neighbour] = Future()
-            future.add_done_callback(self._done_request(target))
-            for neighbour in self.neighbours:
-                if neighbour == source:
-                    continue
-                neighbour.send(message)
-            requests.add(future)
+            if target == self:
+                response = RouteResponse(self, message.source)
+                source.send(response)
+            elif target in self.directions:
+                direction = self.directions[target]
+                direction.send(message)
+            else:
+                requests = self.pending_requests.setdefault(target, set())
+                has_pending_requests = bool(requests)
+                future: Future[Neighbour] = Future()
+                future.add_done_callback(self._done_request(target))
+                requests.add(future)
+                if not has_pending_requests:
+                    for neighbour in self.neighbours:
+                        if neighbour == source:
+                            continue
+                        neighbour.send(message)
         elif isinstance(message, RouteResponse):
             target = message.destination
             direction = self.directions.get(target)
