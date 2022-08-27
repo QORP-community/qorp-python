@@ -91,6 +91,17 @@ class Router(Node):
         else:
             raise TypeError
 
+    def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional[Future] = None) -> bool:
+        target = rreq.destination
+        requests = self.pending_requests.get(target)
+        if not requests:
+            # there is no requests for target
+            return True
+        elif exclude in requests and len(requests) == 1:
+            # there is exactly one request and it is excluded request
+            return True
+        return False
+
     def frontend_message_callback(self, message: Data):
         # TODO: write frontend-originated data message processing code
         pass
