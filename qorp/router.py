@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from typing import Callable, Dict, Optional, Set
 
-from .encryption import X25519PrivateKey, X25519PublicKey
+from .encryption import Ed25519PrivateKey, Ed25519PublicKey
 from .frontend import Frontend
 from .messages import Message
 from .messages import Data, RouteRequest, RouteResponse, RouteError
@@ -18,8 +18,8 @@ EMPTY_SET: Set = set()
 
 class Router(Node):
 
-    private_key: X25519PrivateKey
-    public_key: X25519PublicKey
+    private_key: Ed25519PrivateKey
+    public_key: Ed25519PublicKey
     broadcast_listeners: Set[Listener]
     frontend: Frontend
     neighbours: Set[Neighbour]

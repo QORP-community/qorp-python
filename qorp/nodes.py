@@ -1,6 +1,6 @@
 from typing import Set
 
-from .encryption import X25519PublicKey
+from .encryption import Ed25519PublicKey
 from .messages import Message
 from .transports import Listener, Transporter
 
@@ -11,7 +11,7 @@ class Node:
     Node's address is a X25519 public key.
     """
 
-    address: X25519PublicKey
+    address: Ed25519PublicKey
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Node):
