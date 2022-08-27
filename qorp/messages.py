@@ -4,15 +4,16 @@ Module for definitions of each message type's structure.
 
 from __future__ import annotations
 
-from abc import ABC
-from dataclasses import dataclass
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Optional
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from . import Node
 
 
-@dataclass
+@dataclass  # type: ignore  # (due to mypy issue #5374)
 class Message(ABC):
     """
     Base class for all protocol messages.
@@ -20,6 +21,15 @@ class Message(ABC):
 
     source: Node
     destination: Node
+    signature: Optional[bytes] = field(init=False)
+
+    @abstractmethod
+    def sign(self) -> None:
+        pass
+
+    @abstractmethod
+    def verify(self) -> bool:
+        pass
 
 
 @dataclass
