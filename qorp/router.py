@@ -68,14 +68,13 @@ class Router(Node):
                 direction.send(message)
             else:
                 requests = self.pending_requests.setdefault(target, set())
-                has_pending_requests = bool(requests)
                 loop = asyncio.get_running_loop()
                 future: Future[Neighbour] = loop.create_future()
                 future.add_done_callback(self._done_request(target))
                 ttl_kill = self._rreq_ttl_killer(target, future)
                 loop.call_later(RREQ_TIMEOUT, ttl_kill)
                 requests.add(future)
-                if not has_pending_requests:
+                if self.is_unique_rreq(message, exclude=future):
                     for neighbour in self.neighbours:
                         if neighbour == source:
                             continue
