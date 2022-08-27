@@ -1,8 +1,9 @@
 import asyncio
 from asyncio import Future
 from contextlib import contextmanager
+from weakref import WeakKeyDictionary
 
-from typing import Callable, Dict, Optional, Set
+from typing import Callable, Dict, Optional, Set, Tuple
 
 from .encryption import Ed25519PrivateKey, Ed25519PublicKey
 from .frontend import Frontend
@@ -25,6 +26,7 @@ class Router(Node):
     neighbours: Set[Neighbour]
     directions: Dict[Node, Neighbour]
     pending_requests: Dict[Node, Set["Future[Neighbour]"]]
+    _requesters: WeakKeyDictionary["Future[Neighbour]", Tuple[Node, Node]]
 
     async def find_direction(self, target: Node, timeout: Optional[float] = RREQ_TIMEOUT) -> Neighbour:
         if target in self.directions:
