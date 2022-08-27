@@ -69,9 +69,9 @@ class Router(Node):
             else:
                 requests = self.pending_requests.setdefault(target, set())
                 has_pending_requests = bool(requests)
-                future: Future[Neighbour] = Future()
-                future.add_done_callback(self._done_request(target))
                 loop = asyncio.get_running_loop()
+                future: Future[Neighbour] = loop.create_future()
+                future.add_done_callback(self._done_request(target))
                 ttl_kill = self._rreq_ttl_killer(target, future)
                 loop.call_later(RREQ_TIMEOUT, ttl_kill)
                 requests.add(future)
