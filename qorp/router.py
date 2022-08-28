@@ -3,13 +3,13 @@ from asyncio import Future
 from contextlib import contextmanager
 from weakref import WeakKeyDictionary
 
-from typing import Callable, Dict, Optional, Set, Tuple
+from typing import Callable, Dict, Optional, Set, Tuple, Union
 
 from .encryption import Ed25519PrivateKey, Ed25519PublicKey
 from .frontend import Frontend
-from .messages import Message
-from .messages import Data, RouteRequest, RouteResponse, RouteError
-from .nodes import Node, Neighbour
+from .messages import FrontendData, NetworkMessage
+from .messages import NetworkData, RouteRequest, RouteResponse, RouteError
+from .nodes import KnownNode, Node, Neighbour
 from .transports import Listener
 
 
@@ -17,7 +17,7 @@ RREQ_TIMEOUT = 10
 EMPTY_SET: Set = set()
 
 
-class Router(Node):
+class Router(KnownNode):
 
     private_key: Ed25519PrivateKey
     public_key: Ed25519PublicKey
@@ -48,9 +48,12 @@ class Router(Node):
         finally:
             requests.remove(future)
 
-    def network_message_callback(self, source: Neighbour, message: Message):
+    def network_message_callback(self, source: Neighbour, message: NetworkMessage):
+        if not message.verify():
+            return
         direction: Optional[Neighbour]
-        if isinstance(message, Data):
+        target: Union[KnownNode, Node]
+        if isinstance(message, NetworkData):
             target = message.destination
             if target == self:
                 self.frontend.send(message)
@@ -103,7 +106,7 @@ class Router(Node):
             return True
         return False
 
-    def frontend_message_callback(self, message: Data):
+    def frontend_message_callback(self, message: FrontendData):
         # TODO: write frontend-originated data message processing code
         pass
 
