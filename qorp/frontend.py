@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Callable
 
-from .messages import Data
+from .messages import FrontendData
 
 
 class Frontend(ABC):
@@ -16,9 +16,9 @@ class Frontend(ABC):
     that frontend fetches from OS or other software.
     """
 
-    data_callback: Callable[[Data], None]
+    data_callback: Callable[[FrontendData], None]
 
-    def send(self, message: Data):
+    def send(self, message: FrontendData):
         """
         Sends Data message to frontend (which relies it to OS or some other
         software).

@@ -4,24 +4,24 @@ from typing import Callable
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from .messages import Message
+    from .messages import NetworkMessage
 
 
-class Encoder(ABC, Callable[["Message"], bytes]):
+class Encoder(ABC, Callable[["NetworkMessage"], bytes]):
     """
     Base class for messages encoders.
     """
 
     @abstractmethod
-    def __call__(self, message: "Message") -> bytes:
+    def __call__(self, message: "NetworkMessage") -> bytes:
         pass
 
 
-class Decoder(ABC, Callable[[bytes], "Message"]):
+class Decoder(ABC, Callable[[bytes], "NetworkMessage"]):
     """
     Base class for messages decoders.
     """
 
     @abstractmethod
-    def __call__(self, data: bytes) -> "Message":
+    def __call__(self, data: bytes) -> "NetworkMessage":
         pass

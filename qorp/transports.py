@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, Generic, Type, TypeVar
 
 from .encoding import Decoder, Encoder
-from .messages import Message
+from .messages import NetworkMessage
 
 
 class Protocol(ABC):
@@ -38,7 +38,7 @@ class Transporter(ABC, Generic[Proto]):
     encoder: Encoder
 
     @abstractmethod
-    def send(self, message: Message):
+    def send(self, message: NetworkMessage):
         """
         Sends message through specific transport.
         """
@@ -54,5 +54,5 @@ class Listener(ABC, Generic[Proto]):
     `decoder` is encoding.Decoder instance for deserialize received messages.
     """
 
-    callback: Callable[[Message], None]
+    callback: Callable[[NetworkMessage], None]
     decoder: Decoder
