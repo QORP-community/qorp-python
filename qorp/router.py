@@ -61,7 +61,7 @@ class Router(KnownNode):
                 direction = self.directions[target]
                 direction.send(message)
             else:
-                rerr = RouteError(self, source)
+                rerr = RouteError(self, source, target)
                 source.send(rerr)
         elif isinstance(message, RouteRequest):
             target = message.destination
