@@ -107,9 +107,10 @@ class Router(KnownNode):
         if direction is not None:
             direction.send(response)
 
-    def handle_rerr(self, source: Neighbour, rerr: RouteError):
-        # TODO: remove direction from directions
-        pass
+    def handle_rerr(self, source: Neighbour, error: RouteError):
+        if self.directions.get(error.route_destination) == source:
+            self.directions.pop(error.route_destination)
+        # TODO: ?? resend RErr message 
 
     def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional[Future] = None) -> bool:
         target = rreq.destination
