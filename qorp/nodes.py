@@ -1,17 +1,20 @@
-from typing import Set
+from typing import NewType, Set
 
 from .encryption import Ed25519PublicKey
 from .messages import Message
 from .transports import Listener, Transporter
 
 
+NodeAddress = NewType("NodeAddress", bytes)
+
+
 class Node:
     """
     Network node representation.
-    Node's address is a X25519 public key.
+    Node's address is a derivate from Ed25519 public key.
     """
 
-    address: Ed25519PublicKey
+    address: NodeAddress
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Node):
@@ -29,7 +32,12 @@ class Node:
         return hash(self.address)
 
 
-class Neighbour(Node):
+class KnownNode(Node):
+    
+    public_key: Ed25519PublicKey
+
+
+class Neighbour(KnownNode):
     """
     Neighbour is the node with which there is a direct 'connection'.
     Listeners and neighbours are sets of unidirectional links.
