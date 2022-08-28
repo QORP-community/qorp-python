@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Union
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from . import Node
+    from .nodes import KnownNode, Node
 
 
 @dataclass  # type: ignore  # (due to mypy issue #5374)
@@ -55,7 +55,17 @@ class NetworkData(NetworkMessage):
     payload is some higher-layer protocol message.
     """
 
+    source: KnownNode
+    destination: KnownNode
     payload: bytes
+
+    def sign(self) -> None:
+        # TODO: make this done
+        pass
+
+    def verify(self) -> bool:
+        # TODO: make this done
+        pass
 
 
 @dataclass
@@ -71,12 +81,34 @@ class RouteRequest(NetworkMessage):
     to prevent broadcast storms in the network.
     """
 
+    source: KnownNode
+    destination: Union[Node, KnownNode]
+
+    def sign(self) -> None:
+        # TODO: make this done
+        pass
+
+    def verify(self) -> bool:
+        # TODO: make this done
+        pass
+
 
 @dataclass
 class RouteResponse(NetworkMessage):
     """
     Route Response (RRep) message used to reply to RReq message.
     """
+
+    source: KnownNode
+    destination: KnownNode
+
+    def sign(self) -> None:
+        # TODO: make this done
+        pass
+
+    def verify(self) -> bool:
+        # TODO: make this done
+        pass
 
 
 @dataclass
@@ -88,3 +120,14 @@ class RouteError(NetworkMessage):
     RErr messages must be sended back right to route source node over the all
     nodes in the current node.
     """
+
+    source: KnownNode
+    destination: KnownNode
+
+    def sign(self) -> None:
+        # TODO: make this done
+        pass
+
+    def verify(self) -> bool:
+        # TODO: make this done
+        pass
