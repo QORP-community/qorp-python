@@ -49,7 +49,7 @@ class NetworkMessage(Message, ABC):
 
 
 @dataclass
-class Data(Message):
+class NetworkData(NetworkMessage):
     """
     Data message used to transfer payload to other nodes. Typically
     payload is some higher-layer protocol message.
@@ -59,7 +59,7 @@ class Data(Message):
 
 
 @dataclass
-class RouteRequest(Message):
+class RouteRequest(NetworkMessage):
     """
     Route Request (RReq) message used to obtain route to other node of the
     network.
@@ -73,14 +73,14 @@ class RouteRequest(Message):
 
 
 @dataclass
-class RouteResponse(Message):
+class RouteResponse(NetworkMessage):
     """
     Route Response (RRep) message used to reply to RReq message.
     """
 
 
 @dataclass
-class RouteError(Message):
+class RouteError(NetworkMessage):
     """
     Route Error (RErr) message used to signal that some route over this node
     becomes invalid (due to any reason).
