@@ -54,52 +54,62 @@ class Router(KnownNode):
     def network_message_callback(self, source: Neighbour, message: NetworkMessage):
         if not message.verify():
             return
-        direction: Optional[Neighbour]
-        target: Union[KnownNode, Node]
         if isinstance(message, NetworkData):
-            target = message.destination
-            if target == self:
-                self.frontend.send(message)
-            elif target in self.directions:
-                direction = self.directions[target]
-                direction.send(message)
-            else:
-                rerr = RouteError(self, source, target)
-                source.send(rerr)
+            self.handle_data(source, message)
         elif isinstance(message, RouteRequest):
-            target = message.destination
-            if target == self:
-                exchange_private_key = X25519PrivateKey.generate()
-                exchange_public_key = exchange_private_key.public_key()
-                # TODO: make exchange and store generated key
-                response = RouteResponse(self, message.source, exchange_public_key)
-                source.send(response)
-            elif target in self.directions:
-                direction = self.directions[target]
-                direction.send(message)
-            else:
-                requests = self.pending_requests.setdefault(target, set())
-                loop = asyncio.get_running_loop()
-                future: Future[Neighbour] = loop.create_future()
-                future.add_done_callback(self._done_request(target))
-                ttl_kill = self._rreq_ttl_killer(target, future)
-                loop.call_later(RREQ_TIMEOUT, ttl_kill)
-                requests.add(future)
-                if self.is_unique_rreq(message, exclude=future):
-                    for neighbour in self.neighbours:
-                        if neighbour == source:
-                            continue
-                        neighbour.send(message)
+            self.handle_rreq(source, message)
         elif isinstance(message, RouteResponse):
-            target = message.destination
-            direction = self.directions.get(target)
-            if direction is not None:
-                direction.send(message)
+            self.handle_rrep(source, message)
         elif isinstance(message, RouteError):
-            # TODO: remove direction from directions
-            pass
+            self.handle_rerr(source, message)
         else:
             raise TypeError
+
+    def handle_data(self, source: Neighbour, data: NetworkData):
+        target = data.destination
+        if target == self:
+            self.frontend.send(data)
+        elif target in self.directions:
+            direction = self.directions[target]
+            direction.send(data)
+        else:
+            rerr = RouteError(self, source, target)
+            source.send(rerr)
+
+    def handle_rreq(self, source: Neighbour, request: RouteRequest):
+        target = request.destination
+        if target == self:
+            exchange_private_key = X25519PrivateKey.generate()
+            exchange_public_key = exchange_private_key.public_key()
+            # TODO: make exchange and store generated key
+            response = RouteResponse(self, request.source, exchange_public_key)
+            source.send(response)
+        elif target in self.directions:
+            direction = self.directions[target]
+            direction.send(request)
+        else:
+            requests = self.pending_requests.setdefault(target, set())
+            loop = asyncio.get_running_loop()
+            future: Future[Neighbour] = loop.create_future()
+            future.add_done_callback(self._done_request(target))
+            ttl_kill = self._rreq_ttl_killer(target, future)
+            loop.call_later(RREQ_TIMEOUT, ttl_kill)
+            requests.add(future)
+            if self.is_unique_rreq(request, exclude=future):
+                for neighbour in self.neighbours:
+                    if neighbour == source:
+                        continue
+                    neighbour.send(request)
+
+    def handle_rrep(self, source: Neighbour, response: RouteResponse):
+        target = response.destination
+        direction = self.directions.get(target)
+        if direction is not None:
+            direction.send(response)
+
+    def handle_rerr(self, source: Neighbour, rerr: RouteError):
+        # TODO: remove direction from directions
+        pass
 
     def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional[Future] = None) -> bool:
         target = rreq.destination
