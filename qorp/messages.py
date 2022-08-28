@@ -27,10 +27,6 @@ class Message(ABC):
     def sign(self) -> None:
         pass
 
-    @abstractmethod
-    def verify(self) -> bool:
-        pass
-
 
 @dataclass
 class FrontendData(Message):
@@ -41,6 +37,14 @@ class FrontendData(Message):
 
     def sign(self) -> None:
         # TODO: make this done
+        pass
+
+
+@dataclass  # type: ignore  # (due to mypy issue #5374)
+class NetworkMessage(Message, ABC):
+
+    @abstractmethod
+    def verify(self) -> bool:
         pass
 
 
