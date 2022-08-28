@@ -33,6 +33,18 @@ class Message(ABC):
 
 
 @dataclass
+class FrontendData(Message):
+
+    source: Node
+    destination: Node
+    payload: bytes
+
+    def sign(self) -> None:
+        # TODO: make this done
+        pass
+
+
+@dataclass
 class Data(Message):
     """
     Data message used to transfer payload to other nodes. Typically
