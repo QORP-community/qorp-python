@@ -10,6 +10,7 @@ from typing import Optional, Union
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from .encryption import X25519PublicKey
     from .nodes import KnownNode, Node
 
 
@@ -83,6 +84,7 @@ class RouteRequest(NetworkMessage):
 
     source: KnownNode
     destination: Union[Node, KnownNode]
+    public_key: X25519PublicKey
 
     def sign(self) -> None:
         # TODO: make this done
@@ -101,6 +103,7 @@ class RouteResponse(NetworkMessage):
 
     source: KnownNode
     destination: KnownNode
+    public_key: X25519PublicKey
 
     def sign(self) -> None:
         # TODO: make this done

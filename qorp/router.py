@@ -5,7 +5,7 @@ from weakref import WeakKeyDictionary
 
 from typing import Callable, Dict, Optional, Set, Tuple, Union
 
-from .encryption import Ed25519PrivateKey, Ed25519PublicKey
+from .encryption import Ed25519PrivateKey, Ed25519PublicKey, X25519PrivateKey
 from .frontend import Frontend
 from .messages import FrontendData, NetworkMessage
 from .messages import NetworkData, RouteRequest, RouteResponse, RouteError
@@ -31,7 +31,10 @@ class Router(KnownNode):
     async def find_direction(self, target: Node, timeout: Optional[float] = RREQ_TIMEOUT) -> Neighbour:
         if target in self.directions:
             return self.directions[target]
-        request = RouteRequest(self, target)
+        exchange_private_key = X25519PrivateKey.generate()
+        exchange_public_key = exchange_private_key.public_key()
+        # TODO: store a private key for further secret generation
+        request = RouteRequest(self, target, exchange_public_key)
         with self._track_request(target) as future:
             for neighbour in self.neighbours:
                 neighbour.send(request)
@@ -66,7 +69,10 @@ class Router(KnownNode):
         elif isinstance(message, RouteRequest):
             target = message.destination
             if target == self:
-                response = RouteResponse(self, message.source)
+                exchange_private_key = X25519PrivateKey.generate()
+                exchange_public_key = exchange_private_key.public_key()
+                # TODO: make exchange and store generated key
+                response = RouteResponse(self, message.source, exchange_public_key)
                 source.send(response)
             elif target in self.directions:
                 direction = self.directions[target]
