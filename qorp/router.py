@@ -108,7 +108,10 @@ class Router(KnownNode):
     def handle_data(self, source: Neighbour, data: NetworkData):
         target = data.destination
         if target == self:
-            self.frontend.send(data)
+            route_info = self.incoming_routes[data.source]
+            message_data = route_info.encryption_key.decrypt(data.nonce, data.payload)
+            message = FrontendData(data.source, data.destination, message_data)
+            self.frontend.send(message)
         elif target in self.directions:
             direction = self.directions[target]
             direction.send(data)
