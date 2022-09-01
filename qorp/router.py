@@ -39,6 +39,9 @@ class Router(KnownNode):
     broadcast_listeners: Set[Listener]
     frontend: Frontend
     neighbours: Set[Neighbour]
+    incoming_routes: Dict[KnownNode, RouteInfo]
+    outgoing_routes: Dict[KnownNode, RouteInfo]
+    transit_routes: Dict[KnownNode, Dict[KnownNode, Neighbour]]
     directions: Dict[Node, Neighbour]
     pending_requests: Dict[Node, Set["Future[Neighbour]"]]
     _requesters: WeakKeyDictionary["Future[Neighbour]", Tuple[Node, Node]]
@@ -50,6 +53,9 @@ class Router(KnownNode):
         self.frontend = frontend
         self.broadcast_listeners = set()
         self.neighbours = set()
+        self.incoming_routes = {}
+        self.outgoing_routes = {}
+        self.transit_routes = {}
         self.pending_requests = {}
         self._requesters = WeakKeyDictionary()
 
