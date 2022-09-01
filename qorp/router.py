@@ -1,11 +1,13 @@
 import asyncio
 from asyncio import Future
 from contextlib import contextmanager
+from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
 from typing import Callable, Dict, Optional, Set, Tuple, Union
 
 from .encryption import Ed25519PrivateKey, Ed25519PublicKey, X25519PrivateKey
+from .encryption import ChaCha20Poly1305
 from .frontend import Frontend
 from .messages import FrontendData, NetworkMessage
 from .messages import NetworkData, RouteRequest, RouteResponse, RouteError
@@ -15,6 +17,18 @@ from .transports import Listener
 
 RREQ_TIMEOUT = 10
 EMPTY_SET: Set = set()
+
+
+@dataclass
+class RouteInfo:
+
+    direction: Neighbour
+    encryption_key: ChaCha20Poly1305
+    counter: int = 0
+
+    def get_nonce(self):
+        self.counter += 1
+        return self.counter
 
 
 class Router(KnownNode):
