@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
-from typing import Callable, Dict, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Optional, Set, Tuple
 
 from .encryption import Ed25519PrivateKey, Ed25519PublicKey
 from .encryption import X25519PrivateKey
@@ -143,7 +143,7 @@ class Router(KnownNode):
     def handle_rerr(self, source: Neighbour, error: RouteError):
         if self.directions.get(error.route_destination) == source:
             self.directions.pop(error.route_destination)
-        # TODO: ?? resend RErr message 
+        # TODO: ?? resend RErr message
 
     def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional[Future] = None) -> bool:
         target = rreq.destination
