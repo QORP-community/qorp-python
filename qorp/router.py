@@ -6,7 +6,8 @@ from weakref import WeakKeyDictionary
 
 from typing import Callable, Dict, Optional, Set, Tuple, Union
 
-from .encryption import Ed25519PrivateKey, Ed25519PublicKey, X25519PrivateKey
+from .encryption import Ed25519PrivateKey, Ed25519PublicKey
+from .encryption import X25519PrivateKey
 from .encryption import ChaCha20Poly1305
 from .frontend import Frontend
 from .messages import FrontendData, NetworkMessage
