@@ -28,6 +28,16 @@ class Router(KnownNode):
     pending_requests: Dict[Node, Set["Future[Neighbour]"]]
     _requesters: WeakKeyDictionary["Future[Neighbour]", Tuple[Node, Node]]
 
+    def __init__(self, private_key: bytes, frontend: Frontend) -> None:
+        super().__init__()
+        self.private_key = Ed25519PrivateKey.from_private_bytes(private_key)
+        self.public_key = self.private_key.public_key()
+        self.frontend = frontend
+        self.broadcast_listeners = set()
+        self.neighbours = set()
+        self.pending_requests = {}
+        self._requesters = WeakKeyDictionary()
+
     async def find_direction(self, target: Node, timeout: Optional[float] = RREQ_TIMEOUT) -> Neighbour:
         if target in self.directions:
             return self.directions[target]
