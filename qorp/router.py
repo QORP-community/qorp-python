@@ -16,6 +16,8 @@ from .nodes import KnownNode, Node, Neighbour
 from .transports import Listener
 
 
+RRepInfo = Tuple[Neighbour, RouteResponse]
+
 RREQ_TIMEOUT = 10
 EMPTY_SET: Set = set()
 
@@ -43,8 +45,8 @@ class Router(KnownNode):
     outgoing_routes: Dict[KnownNode, RouteInfo]
     transit_routes: Dict[KnownNode, Dict[KnownNode, Neighbour]]
     directions: Dict[Node, Neighbour]
-    pending_requests: Dict[Node, Set["Future[Neighbour]"]]
-    _requesters: WeakKeyDictionary["Future[Neighbour]", Tuple[Node, Node]]
+    pending_requests: Dict[Node, Set["Future[RRepInfo]"]]
+    _requesters: WeakKeyDictionary["Future[RRepInfo]", Tuple[Node, Node]]
 
     def __init__(self, private_key: bytes, frontend: Frontend) -> None:
         super().__init__()
@@ -66,17 +68,22 @@ class Router(KnownNode):
             return self.directions[target]
         exchange_private_key = X25519PrivateKey.generate()
         exchange_public_key = exchange_private_key.public_key()
-        # TODO: store a private key for further secret generation
         request = RouteRequest(self, target, exchange_public_key)
         with self._track_request(target) as future:
             for neighbour in self.neighbours:
                 neighbour.send(request)
-            response = await asyncio.wait_for(future, timeout)
-        return response
+            direction, response = await asyncio.wait_for(future, timeout)
+            destination_public_key = response.public_key
+            raw_encryption_key = exchange_private_key.exchange(destination_public_key)
+            encryption_key = ChaCha20Poly1305(raw_encryption_key)
+            route_info = RouteInfo(direction, encryption_key)
+            # TODO: check that there is no existed route info for target
+            self.outgoing_routes[response.source] = route_info
+        return direction
 
     @contextmanager
     def _track_request(self, target: Node):
-        future: Future[Neighbour] = Future()
+        future: Future[RRepInfo] = Future()
         requests = self.pending_requests.setdefault(target, set())
         requests.add(future)
         try:
@@ -123,7 +130,7 @@ class Router(KnownNode):
         else:
             requests = self.pending_requests.setdefault(target, set())
             loop = asyncio.get_running_loop()
-            future: Future[Neighbour] = loop.create_future()
+            future: Future[RRepInfo] = loop.create_future()
             future.add_done_callback(self._done_request(target))
             ttl_kill = self._rreq_ttl_killer(target, future)
             loop.call_later(RREQ_TIMEOUT, ttl_kill)
@@ -169,14 +176,15 @@ class Router(KnownNode):
                 future.cancel()
         return callback
 
-    def _done_request(self, target: Node) -> Callable[["Future[Neighbour]"], None]:
-        def callback(future: "Future[Neighbour]"):
+    def _done_request(self, target: Node) -> Callable[["Future[RRepInfo]"], None]:
+        def callback(future: "Future[RRepInfo]"):
             futures = self.pending_requests.get(target, EMPTY_SET)
             if future in futures:
                 futures.remove(future)
             if future.done() and not (future.cancelled() or future.exception()):
-                direction = future.result()
+                result = future.result()
+                direction, _ = result
                 self.directions.setdefault(target, direction)
                 for future in futures:
-                    future.set_result(direction)
+                    future.set_result(result)
         return callback
