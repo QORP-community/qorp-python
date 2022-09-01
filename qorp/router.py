@@ -124,7 +124,15 @@ class Router(KnownNode):
         if target == self:
             exchange_private_key = X25519PrivateKey.generate()
             exchange_public_key = exchange_private_key.public_key()
-            # TODO: make exchange and store generated key
+            source_public_key = request.public_key
+            raw_encryption_key = exchange_private_key.exchange(source_public_key)
+            # NOTE: there is no need to cut 32-bytes shared secret
+            #       because ChaCha20 uses exactly 32-bytes long key
+            encryption_key = ChaCha20Poly1305(raw_encryption_key)
+            route_info = RouteInfo(source, encryption_key)
+            # TODO: check that there is no existed route info for request
+            #       source (it might allow replay attacks)
+            self.incoming_routes[request.source] = route_info
             response = RouteResponse(self, request.source, exchange_public_key)
             source.send(response)
         elif target in self.directions:
