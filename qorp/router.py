@@ -50,6 +50,8 @@ class Router(KnownNode):
         super().__init__()
         self.private_key = Ed25519PrivateKey.from_private_bytes(private_key)
         self.public_key = self.private_key.public_key()
+        # TODO: add router's adsress initialization
+        # self.address =
         self.frontend = frontend
         self.broadcast_listeners = set()
         self.neighbours = set()
