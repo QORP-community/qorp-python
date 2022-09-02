@@ -145,6 +145,7 @@ class Router(KnownNode):
             future.add_done_callback(self._done_request(target))
             ttl_kill = self._rreq_ttl_killer(target, future)
             loop.call_later(RREQ_TIMEOUT, ttl_kill)
+            self._requests_details[future] = request
             requests.add(future)
             if self.is_unique_rreq(request, exclude=future):
                 for neighbour in self.neighbours:
