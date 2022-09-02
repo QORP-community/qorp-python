@@ -46,7 +46,7 @@ class Router(KnownNode):
     transit_routes: Dict[KnownNode, Dict[KnownNode, Neighbour]]
     directions: Dict[Node, Neighbour]
     pending_requests: Dict[Node, Set["Future[RRepInfo]"]]
-    _requesters: WeakKeyDictionary["Future[RRepInfo]", Tuple[Node, Node]]
+    _requests_details: WeakKeyDictionary["Future[RRepInfo]", Tuple[Node, Node]]
 
     def __init__(self, private_key: bytes, frontend: Frontend) -> None:
         super().__init__()
@@ -61,7 +61,7 @@ class Router(KnownNode):
         self.outgoing_routes = {}
         self.transit_routes = {}
         self.pending_requests = {}
-        self._requesters = WeakKeyDictionary()
+        self._requests_details = WeakKeyDictionary()
 
     async def find_direction(self, target: Node, timeout: Optional[float] = RREQ_TIMEOUT) -> Neighbour:
         if target in self.directions:
