@@ -61,6 +61,10 @@ class NetworkData(NetworkMessage):
     nonce: bytes
     payload: bytes
 
+    def decrypt(self, key) -> bytes:
+        # TODO: make this done
+        pass
+
     def sign(self) -> None:
         # TODO: make this done
         pass
