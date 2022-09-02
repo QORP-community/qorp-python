@@ -184,7 +184,7 @@ class Router(KnownNode):
             if future in futures:
                 futures.remove(future)
             if not future.done():
-                future.cancel()
+                future.set_exception(TimeoutError)
         return callback
 
     def _done_request(self, target: Node) -> Callable[["Future[RRepInfo]"], None]:
