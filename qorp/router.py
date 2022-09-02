@@ -133,7 +133,7 @@ class Router(KnownNode):
             # TODO: check that there is no existed route info for request
             #       source (it might allow replay attacks)
             self.incoming_routes[request.source] = route_info
-            response = RouteResponse(self, request.source, exchange_public_key)
+            response = RouteResponse(self, request.source, source_public_key, exchange_public_key)
             source.send(response)
         elif target in self.directions:
             direction = self.directions[target]

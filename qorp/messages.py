@@ -108,6 +108,7 @@ class RouteResponse(NetworkMessage):
 
     source: KnownNode
     destination: KnownNode
+    requester_key: X25519PublicKey  # to prevent replay attack in route search process
     public_key: X25519PublicKey
 
     def sign(self) -> None:
