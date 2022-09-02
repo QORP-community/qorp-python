@@ -46,7 +46,7 @@ class Router(KnownNode):
     transit_routes: Dict[KnownNode, Dict[KnownNode, Neighbour]]
     directions: Dict[Node, Neighbour]
     pending_requests: Dict[Node, Set["Future[RRepInfo]"]]
-    _requests_details: WeakKeyDictionary["Future[RRepInfo]", Tuple[Node, Node]]
+    _requests_details: WeakKeyDictionary["Future[RRepInfo]", RouteRequest]
 
     def __init__(self, private_key: bytes, frontend: Frontend) -> None:
         super().__init__()
@@ -153,16 +153,14 @@ class Router(KnownNode):
                     neighbour.send(request)
 
     def handle_rrep(self, source: Neighbour, response: RouteResponse):
-        target = response.destination
-        if target == self:
-            # TODO: handle RRep for outgoing route
-            pass
-        elif target in self.pending_requests:
-            # TODO: handle RRep for transit route
-            pass
-        else:
-            # NOTE: drop RRep if it is unexpected
-            pass
+        futures = self.pending_requests.get(response.source, EMPTY_SET)
+        for future in futures:
+            rreq = self._requests_details.get(future)
+            if rreq.public_key != response.requester_key:
+                # response not for this request
+                continue
+            futures.remove(future)
+            future.set_result((source, response))
 
     def handle_rerr(self, source: Neighbour, error: RouteError):
         if self.directions.get(error.route_destination) == source:
