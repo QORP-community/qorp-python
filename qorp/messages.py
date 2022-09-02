@@ -58,6 +58,7 @@ class NetworkData(NetworkMessage):
 
     source: KnownNode
     destination: KnownNode
+    nonce: bytes
     payload: bytes
 
     def sign(self) -> None:
