@@ -154,9 +154,15 @@ class Router(KnownNode):
 
     def handle_rrep(self, source: Neighbour, response: RouteResponse):
         target = response.destination
-        direction = self.directions.get(target)
-        if direction is not None:
-            direction.send(response)
+        if target == self:
+            # TODO: handle RRep for outgoing route
+            pass
+        elif target in self.pending_requests:
+            # TODO: handle RRep for transit route
+            pass
+        else:
+            # NOTE: drop RRep if it is unexpected
+            pass
 
     def handle_rerr(self, source: Neighbour, error: RouteError):
         if self.directions.get(error.route_destination) == source:
