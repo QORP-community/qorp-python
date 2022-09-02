@@ -22,7 +22,7 @@ class Message(ABC):
 
     source: Node
     destination: Node
-    signature: Optional[bytes] = field(init=False)
+    signature: Optional[bytes] = field(init=False, default=None)
 
     @abstractmethod
     def sign(self) -> None:
