@@ -22,7 +22,7 @@ class Message(ABC):
 
     source: Node
     destination: Node
-    signature: Optional[bytes] = field(init=False)
+    signature: Optional[bytes] = field(init=False, default=None)
 
     @abstractmethod
     def sign(self) -> None:
@@ -58,7 +58,12 @@ class NetworkData(NetworkMessage):
 
     source: KnownNode
     destination: KnownNode
+    nonce: bytes
     payload: bytes
+
+    def decrypt(self, key) -> bytes:
+        # TODO: make this done
+        pass
 
     def sign(self) -> None:
         # TODO: make this done
@@ -74,7 +79,7 @@ class RouteRequest(NetworkMessage):
     """
     Route Request (RReq) message used to obtain route to other node of the
     network.
-    
+
     RReq propagates over the entire network until it reaches destination
     node, which responds with Route Response message.
 
