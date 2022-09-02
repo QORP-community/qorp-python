@@ -20,6 +20,7 @@ RRepInfo = Tuple[Neighbour, RouteResponse]
 
 RREQ_TIMEOUT = 10
 EMPTY_SET: Set = set()
+EMPTY_DICT: Dict = {}
 
 
 @dataclass
