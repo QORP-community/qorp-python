@@ -158,7 +158,7 @@ class Router(KnownNode):
         futures = self.pending_requests.get(response.source, EMPTY_SET)
         for future in futures:
             rreq = self._requests_details.get(future)
-            if rreq.public_key != response.requester_key:
+            if rreq is None or rreq.public_key != response.requester_key:
                 # response not for this request
                 continue
             futures.remove(future)
