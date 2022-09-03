@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
-from typing import Callable, Dict, Optional, Set, Tuple
+from typing import Callable, Dict, Generator, Optional, Set, Tuple
 
 from .encryption import Ed25519PrivateKey, Ed25519PublicKey
 from .encryption import X25519PrivateKey
@@ -19,7 +19,7 @@ from .transports import Listener
 RRepInfo = Tuple[Neighbour, RouteResponse]
 
 RREQ_TIMEOUT = 10
-EMPTY_SET: Set = set()
+EMPTY_SET: Set["Future[RRepInfo]"] = set()
 EMPTY_DICT: Dict = {}
 
 
@@ -30,7 +30,7 @@ class RouteInfo:
     encryption_key: ChaCha20Poly1305
     counter: int = 0
 
-    def get_nonce(self):
+    def get_nonce(self) -> int:
         self.counter += 1
         return self.counter
 
@@ -83,7 +83,7 @@ class Router(KnownNode):
         return direction
 
     @contextmanager
-    def _track_request(self, target: Node):
+    def _track_request(self, target: Node) -> Generator["Future[RRepInfo]", None, None]:
         future: Future[RRepInfo] = Future()
         requests = self.pending_requests.setdefault(target, set())
         requests.add(future)
@@ -92,7 +92,7 @@ class Router(KnownNode):
         finally:
             requests.remove(future)
 
-    def network_message_callback(self, source: Neighbour, message: NetworkMessage):
+    def network_message_callback(self, source: Neighbour, message: NetworkMessage) -> None:
         if not message.verify():
             return
         if isinstance(message, NetworkData):
@@ -106,7 +106,7 @@ class Router(KnownNode):
         else:
             raise TypeError
 
-    def handle_data(self, source: Neighbour, data: NetworkData):
+    def handle_data(self, source: Neighbour, data: NetworkData) -> None:
         target = data.destination
         if target == self:
             route_info = self.incoming_routes[data.source]
@@ -120,7 +120,7 @@ class Router(KnownNode):
             rerr = RouteError(self, source, target)
             source.send(rerr)
 
-    def handle_rreq(self, source: Neighbour, request: RouteRequest):
+    def handle_rreq(self, source: Neighbour, request: RouteRequest) -> None:
         target = request.destination
         if target == self:
             exchange_private_key = X25519PrivateKey.generate()
@@ -154,7 +154,7 @@ class Router(KnownNode):
                         continue
                     neighbour.send(request)
 
-    def handle_rrep(self, source: Neighbour, response: RouteResponse):
+    def handle_rrep(self, source: Neighbour, response: RouteResponse) -> None:
         futures = self.pending_requests.get(response.source, EMPTY_SET)
         for future in futures:
             rreq = self._requests_details.get(future)
@@ -164,12 +164,12 @@ class Router(KnownNode):
             futures.remove(future)
             future.set_result((source, response))
 
-    def handle_rerr(self, source: Neighbour, error: RouteError):
+    def handle_rerr(self, source: Neighbour, error: RouteError) -> None:
         if self.directions.get(error.route_destination) == source:
             self.directions.pop(error.route_destination)
         # TODO: ?? resend RErr message
 
-    def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional[Future] = None) -> bool:
+    def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional["Future[RRepInfo]"] = None) -> bool:
         target = rreq.destination
         requests = self.pending_requests.get(target)
         if not requests:
@@ -180,12 +180,12 @@ class Router(KnownNode):
             return True
         return False
 
-    def frontend_message_callback(self, message: FrontendData):
+    def frontend_message_callback(self, message: FrontendData) -> None:
         # TODO: write frontend-originated data message processing code
         pass
 
-    def _rreq_ttl_killer(self, target: Node, future: Future):
-        def callback():
+    def _rreq_ttl_killer(self, target: Node, future: "Future[RRepInfo]") -> Callable[[], None]:
+        def callback() -> None:
             futures = self.pending_requests.get(target, EMPTY_SET)
             if future in futures:
                 futures.remove(future)
@@ -194,7 +194,7 @@ class Router(KnownNode):
         return callback
 
     def _done_request(self, target: Node) -> Callable[["Future[RRepInfo]"], None]:
-        def callback(future: "Future[RRepInfo]"):
+        def callback(future: "Future[RRepInfo]") -> None:
             futures = self.pending_requests.get(target, EMPTY_SET)
             if future in futures:
                 futures.remove(future)
