@@ -117,7 +117,7 @@ class Router(KnownNode):
             direction = self.directions[target]
             direction.send(data)
         else:
-            rerr = RouteError(self, source, target)
+            rerr = RouteError(self, source, data.source, data.destination)
             source.send(rerr)
 
     def handle_rreq(self, source: Neighbour, request: RouteRequest) -> None:
