@@ -165,8 +165,10 @@ class Router(KnownNode):
             future.set_result((source, response))
 
     def handle_rerr(self, source: Neighbour, error: RouteError) -> None:
-        if self.directions.get(error.route_destination) == source:
-            self.directions.pop(error.route_destination)
+        destinations = self.transit_routes.get(error.route_source, EMPTY_DICT)
+        direction = destinations.get(error.route_destination)
+        if direction == source:
+            destinations.pop(direction)
         # TODO: ?? resend RErr message
 
     def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional["Future[RRepInfo]"] = None) -> bool:
