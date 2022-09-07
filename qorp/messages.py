@@ -133,7 +133,7 @@ class RouteError(NetworkMessage):
     source: KnownNode
     destination: KnownNode
     route_source: KnownNode
-    route_destination: Union[Node, KnownNode]
+    route_destination: KnownNode
 
     def sign(self) -> None:
         # TODO: make this done
