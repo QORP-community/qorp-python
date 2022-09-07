@@ -110,7 +110,7 @@ class Router(KnownNode):
         target = data.destination
         if target == self:
             route_info = self.incoming_routes[data.source]
-            message_data = route_info.encryption_key.decrypt(data.nonce, data.payload)
+            message_data = route_info.encryption_key.decrypt(data.nonce, data.payload, None)
             message = FrontendData(data.source, data.destination, message_data)
             self.frontend.send(message)
         elif target in self.directions:
