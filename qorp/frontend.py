@@ -1,10 +1,12 @@
 from abc import ABC
 from typing import Callable
 
-from .messages import FrontendData
+from .encryption import Ed25519PrivateKey, Ed25519PublicKey
+from .messages import NetworkMessage
+from .nodes import Neighbour
 
 
-class Frontend(ABC):
+class Frontend(ABC, Neighbour):
     """
     Frontend is intermediator between router and OS or some software.
 
@@ -16,9 +18,12 @@ class Frontend(ABC):
     that frontend fetches from OS or other software.
     """
 
-    data_callback: Callable[[FrontendData], None]
+    private_key: Ed25519PrivateKey
+    public_key: Ed25519PublicKey
 
-    def send(self, message: FrontendData):
+    message_callback: Callable[[NetworkMessage], None]
+
+    def send(self, message: NetworkMessage) -> None:
         """
         Sends Data message to frontend (which relies it to OS or some other
         software).
