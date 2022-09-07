@@ -132,6 +132,7 @@ class RouteError(NetworkMessage):
 
     source: KnownNode
     destination: KnownNode
+    route_source: KnownNode
     route_destination: Union[Node, KnownNode]
 
     def sign(self) -> None:
