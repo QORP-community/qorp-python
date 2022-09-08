@@ -45,6 +45,7 @@ class Router:
         self.frontend = frontend
         self.broadcast_listeners = set()
         self.neighbours = {frontend}
+        self.routes = {(frontend, frontend): (frontend, frontend)}
         self.directions = {frontend: frontend}
         self.pending_requests = {}
         self._requests_details = WeakKeyDictionary()
