@@ -39,7 +39,7 @@ class Router:
     routes: Dict[Tuple[KnownNode, KnownNode], Tuple[Neighbour, Neighbour]]
     directions: Dict[KnownNode, Neighbour]
     pending_requests: Dict[Node, Set["Future[RRepInfo]"]]
-    _requests_details: WeakKeyDictionary["Future[RRepInfo]", RouteRequest]
+    _requests_details: "WeakKeyDictionary[Future[RRepInfo], RouteRequest]"
 
     def __init__(self, frontend: Frontend) -> None:
         self.frontend = frontend
