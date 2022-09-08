@@ -19,18 +19,6 @@ RREQ_TIMEOUT = 10
 EMPTY_SET: Set["Future[RRepInfo]"] = set()
 
 
-@dataclass
-class RouteInfo:
-
-    direction: Neighbour
-    encryption_key: ChaCha20Poly1305
-    counter: int = 0
-
-    def get_nonce(self) -> int:
-        self.counter += 1
-        return self.counter
-
-
 class Router:
 
     frontend: Frontend
