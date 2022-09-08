@@ -1,11 +1,9 @@
 import asyncio
 from asyncio import Future
-from dataclasses import dataclass
 from weakref import WeakKeyDictionary
 
 from typing import Callable, Dict, Optional, Set, Tuple
 
-from .encryption import ChaCha20Poly1305
 from .frontend import Frontend
 from .messages import NetworkMessage
 from .messages import NetworkData, RouteRequest, RouteResponse, RouteError
