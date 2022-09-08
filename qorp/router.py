@@ -54,7 +54,7 @@ class Router:
         route_pair = data.source, data.destination
         directions = self.routes.get(route_pair)
         if directions is None:
-            rerr = RouteError(self.frontend, source, data.source, data.destination)
+            rerr = RouteError(self.frontend, source, *route_pair)
             source.send(rerr)
             return
         source_direction, destination_direction = directions
