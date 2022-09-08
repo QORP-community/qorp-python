@@ -135,4 +135,7 @@ class Router:
             self.directions.setdefault(response.source, direction)
             for future in futures:
                 future.set_result(result)
+            for neighbour in self.neighbours:
+                if neighbour != direction:
+                    neighbour.send(response)
         return callback
