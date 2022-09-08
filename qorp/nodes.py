@@ -1,7 +1,7 @@
 from typing import NewType, Set
 
 from .encryption import Ed25519PublicKey
-from .messages import Message
+from .messages import NetworkMessage
 from .transports import Listener, Transporter
 
 
@@ -46,7 +46,7 @@ class Neighbour(KnownNode):
     listeners: Set[Listener]
     transporters: Set[Transporter]
 
-    def send(self, message: Message):
+    def send(self, message: NetworkMessage) -> None:
         """
         Sends message to neighbour using one of neighbour's transporters.
         """
