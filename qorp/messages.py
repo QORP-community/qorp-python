@@ -25,10 +25,6 @@ class Message(ABC):
     destination: Node
     signature: Optional[bytes] = field(init=False, default=None)
 
-    @abstractmethod
-    def sign(self) -> None:
-        pass
-
 
 @dataclass
 class FrontendData(Message):
@@ -44,6 +40,12 @@ class FrontendData(Message):
 
 @dataclass  # type: ignore  # (due to mypy issue #5374)
 class NetworkMessage(Message, ABC):
+
+    @abstractmethod
+    def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
+        """
+        Signs message. Signature will be placed to `signature` attribute.
+        """
 
     @abstractmethod
     def verify(self) -> bool:
