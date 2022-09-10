@@ -8,7 +8,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional, Union
 
-from .encryption import X25519PublicKey, ChaCha20Poly1305
+from .encryption import Ed25519PrivateKey, X25519PublicKey, ChaCha20Poly1305
+from .encoding import pubkey_to_bytes
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -67,9 +68,16 @@ class NetworkData(NetworkMessage):
     def decrypt(self, key: ChaCha20Poly1305) -> bytes:
         return key.decrypt(self.nonce, self.payload, None)
 
-    def sign(self) -> None:
-        # TODO: make this done
-        pass
+    def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            pubkey_to_bytes(self.destination.public_key),
+            self.nonce,
+            self.length.to_bytes(2, "big"),
+            self.payload,
+        ]
+        message = b"".join(fields)
+        self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
         # TODO: make this done
@@ -93,9 +101,18 @@ class RouteRequest(NetworkMessage):
     destination: Union[Node, KnownNode]
     public_key: X25519PublicKey
 
-    def sign(self) -> None:
-        # TODO: make this done
-        pass
+    def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
+        if isinstance(self.destination, KnownNode):
+            dst_field = pubkey_to_bytes(self.destination.public_key)
+        else:
+            dst_field = self.destination.address
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            dst_field,
+            pubkey_to_bytes(self.public_key),
+        ]
+        message = b"".join(fields)
+        self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
         # TODO: make this done
@@ -113,9 +130,15 @@ class RouteResponse(NetworkMessage):
     requester_key: X25519PublicKey  # to prevent replay attack in route search process
     public_key: X25519PublicKey
 
-    def sign(self) -> None:
-        # TODO: make this done
-        pass
+    def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            pubkey_to_bytes(self.destination.public_key),
+            pubkey_to_bytes(self.requester_key),
+            pubkey_to_bytes(self.public_key),
+        ]
+        message = b"".join(fields)
+        self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
         # TODO: make this done
@@ -137,9 +160,15 @@ class RouteError(NetworkMessage):
     route_source: KnownNode
     route_destination: KnownNode
 
-    def sign(self) -> None:
-        # TODO: make this done
-        pass
+    def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            pubkey_to_bytes(self.destination.public_key),
+            pubkey_to_bytes(self.route_source.public_key),
+            pubkey_to_bytes(self.route_destination.public_key),
+        ]
+        message = b"".join(fields)
+        self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
         # TODO: make this done
