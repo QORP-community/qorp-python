@@ -52,7 +52,7 @@ class KnownNode(Node):
 class Neighbour(KnownNode):
     """
     Neighbour is the node with which there is a direct 'connection'.
-    Listeners and neighbours are sets of unidirectional links.
+    Listeners and transporters are sets of unidirectional links.
     """
 
     listeners: Set[Listener]
