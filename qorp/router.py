@@ -1,141 +1,110 @@
-import asyncio
-from asyncio import Future
-from weakref import WeakKeyDictionary
+from __future__ import annotations
 
-from typing import Callable, Dict, Optional, Set, Tuple
+from dataclasses import dataclass, field
 
+from typing import Callable, Dict, Union
+
+from .encryption import Ed25519PrivateKey, Ed25519PublicKey, X25519PrivateKey
+from .encryption import ChaCha20Poly1305
 from .frontend import Frontend
-from .messages import NetworkMessage
+from .messages import NetworkMessage, FrontendData
 from .messages import NetworkData, RouteRequest, RouteResponse, RouteError
-from .nodes import KnownNode, Node, Neighbour
-from .transports import Listener
+from .nodes import Node, KnownNode, Neighbour
+from .routing import MessagesForwarder
 
 
-RRepInfo = Tuple[Neighbour, RouteResponse]
+@dataclass
+class SessionInfo:
 
-RREQ_TIMEOUT = 10
-EMPTY_SET: Set["Future[RRepInfo]"] = set()
+    key: ChaCha20Poly1305
+    counter: int = field(init=False, default=0)
 
 
-class Router:
+class Router(Neighbour):
+    """
+    Frontend is intermediator between router and OS or some software.
 
+    Frontend obtains Data messages from OS or router, encode-decode it and then
+    rely it to OS (if message comes from router) or router (if message comes
+    from OS).
+
+    `message_callback` is a callback function which must be called on each
+    message that frontend fetches from OS or other software.
+    """
+
+    private_key: Ed25519PrivateKey
+    public_key: Ed25519PublicKey
     frontend: Frontend
-    broadcast_listeners: Set[Listener]
-    neighbours: Set[Neighbour]
-    routes: Dict[Tuple[KnownNode, KnownNode], Tuple[Neighbour, Neighbour]]
-    directions: Dict[KnownNode, Neighbour]
-    pending_requests: Dict[Node, Set["Future[RRepInfo]"]]
-    _requests_details: "WeakKeyDictionary[Future[RRepInfo], RouteRequest]"
+    forwarder: MessagesForwarder
+    sessions: Dict[KnownNode, SessionInfo]
+    halfopened: Dict[Node, X25519PrivateKey]
 
-    def __init__(self, frontend: Frontend) -> None:
-        self.frontend = frontend
-        self.broadcast_listeners = set()
-        self.neighbours = {frontend}
-        self.routes = {(frontend, frontend): (frontend, frontend)}
-        self.directions = {frontend: frontend}
-        self.pending_requests = {}
-        self._requests_details = WeakKeyDictionary()
+    def __init__(
+        self,
+        private_key: Ed25519PrivateKey,
+        frontend: Frontend = None,
+        frontend_factory: Callable[[Router], Frontend] = None,
+        forwarder_factory: Callable[[Router], MessagesForwarder] = MessagesForwarder
+    ) -> None:
+        self.private_key = private_key
+        super().__init__(private_key.public_key())
+        if frontend is not None:
+            self.frontend = frontend
+        elif frontend_factory is not None:
+            self.frontend = frontend_factory(self)
+        else:
+            raise TypeError("Missing 'frontend' or 'frontend_factory' argument.")
+        self.sessions = {}
+        self.halfopened = {}
+        self.forwarder = forwarder_factory(self)
 
-    def message_callback(self, source: Neighbour, msg: NetworkMessage) -> None:
-        if not msg.verify():
-            return
-        if isinstance(msg, NetworkData):
-            self.handle_data(source, msg)
-        elif isinstance(msg, RouteRequest):
-            self.handle_rreq(source, msg)
-        elif isinstance(msg, RouteResponse):
-            self.handle_rrep(source, msg)
-        elif isinstance(msg, RouteError):
-            self.handle_rerr(source, msg)
+    def send(self, message: Union[NetworkMessage, FrontendData]) -> None:
+        """
+        Handle messages from MessageForwarder or Frontend.
+        """
+        if isinstance(message, FrontendData):
+            if message.source != self.address:
+                pass
+            if message.destination in self.sessions:
+                pass
+            elif message.destination in self.halfopened:
+                pass
+            else:
+                pass
+        elif isinstance(message, NetworkData):
+            session = self.sessions[message.source]
+            data = session.key.decrypt(message.nonce, message.payload, None)
+            frontend_msg = FrontendData(message.source, message.destination, data)
+            self.frontend.message_callback(frontend_msg)
+        elif isinstance(message, RouteRequest):
+            private_key = X25519PrivateKey.generate()
+            public_key = private_key.public_key()
+            source_public_key = message.public_key
+            raw_encryption_key = private_key.exchange(source_public_key)
+            # NOTE: there is no need to cut 32-bytes shared secret because
+            #       ChaCha20 uses exactly 32-bytes long key
+            encryption_key = ChaCha20Poly1305(raw_encryption_key)
+            session = SessionInfo(encryption_key)
+            # TODO: check that there is no existed route info for request
+            #       source (it might allow replay attacks)
+            self.sessions[message.source] = session
+            response = RouteResponse(self, message.source, source_public_key, public_key)
+            response.sign(self.private_key)
+            self.forwarder.message_callback(self, response)
+        elif isinstance(message, RouteResponse):
+            private_key = self.halfopened[message.source]
+            public_key = private_key.public_key()
+            destination_public_key = message.public_key
+            raw_encryption_key = private_key.exchange(destination_public_key)
+            # NOTE: there is no need to cut 32-bytes shared secret because
+            #       ChaCha20 uses exactly 32-bytes long key
+            encryption_key = ChaCha20Poly1305(raw_encryption_key)
+            session = SessionInfo(encryption_key)
+            # TODO: check that there is no existed route info for request
+            #       source (it might allow replay attacks)
+            self.sessions[message.source] = session
+        elif isinstance(message, RouteError):
+            if message.route_destination in self.sessions:
+                self.sessions.pop(message.route_destination)
         else:
             raise TypeError
-
-    def handle_data(self, source: Neighbour, data: NetworkData) -> None:
-        route_pair = data.source, data.destination
-        directions = self.routes.get(route_pair)
-        if directions is None:
-            rerr = RouteError(self.frontend, source, *route_pair)
-            source.send(rerr)
-            return
-        source_direction, destination_direction = directions
-        if source_direction == source:
-            destination_direction.send(data)
-
-    def handle_rreq(self, source: Neighbour, request: RouteRequest) -> None:
-        target = request.destination
-        if target in self.directions:
-            direction = self.directions[target]
-            direction.send(request)
-        else:
-            requests = self.pending_requests.setdefault(target, set())
-            loop = asyncio.get_running_loop()
-            future: Future[RRepInfo] = loop.create_future()
-            future.add_done_callback(self._done_request(target))
-            ttl_kill = self._rreq_ttl_killer(target, future)
-            loop.call_later(RREQ_TIMEOUT, ttl_kill)
-            self._requests_details[future] = request
-            requests.add(future)
-            if self.is_unique_rreq(request, exclude=future):
-                for neighbour in self.neighbours:
-                    if neighbour == source:
-                        continue
-                    neighbour.send(request)
-
-    def handle_rrep(self, source: Neighbour, response: RouteResponse) -> None:
-        futures = self.pending_requests.get(response.source, EMPTY_SET)
-        for future in futures:
-            rreq = self._requests_details.get(future)
-            if rreq is None or rreq.public_key != response.requester_key:
-                # response not for this request
-                continue
-            futures.remove(future)
-            future.set_result((source, response))
-
-    def handle_rerr(self, source: Neighbour, error: RouteError) -> None:
-        route_pair = error.route_source, error.route_destination
-        directions = self.routes.get(route_pair)
-        if not directions or directions[1] != source:
-            return
-        self.routes.pop(route_pair)
-        source_direction = directions[0]
-        source_direction.send(error)
-
-    def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional["Future[RRepInfo]"] = None) -> bool:
-        target = rreq.destination
-        requests = self.pending_requests.get(target)
-        if not requests:
-            # there is no requests for target
-            return True
-        elif exclude in requests and len(requests) == 1:
-            # there is exactly one request and it is excluded request
-            return True
-        return False
-
-    def _rreq_ttl_killer(self, target: Node, future: "Future[RRepInfo]") -> Callable[[], None]:
-        def callback() -> None:
-            futures = self.pending_requests.get(target, EMPTY_SET)
-            if future in futures:
-                futures.remove(future)
-            if not future.done():
-                future.set_exception(TimeoutError)
-        return callback
-
-    def _done_request(self, target: Node) -> Callable[["Future[RRepInfo]"], None]:
-        def callback(future: "Future[RRepInfo]") -> None:
-            futures = self.pending_requests.get(target, EMPTY_SET)
-            if future in futures:
-                futures.remove(future)
-            if future.cancelled() or future.exception():
-                return
-            result = future.result()
-            direction, response = result
-            directions = (direction, direction)
-            self.routes[(response.destination, response.source)] = directions
-            self.routes[(response.source, response.destination)] = directions
-            self.directions.setdefault(response.source, direction)
-            for future in futures:
-                future.set_result(result)
-            for neighbour in self.neighbours:
-                if neighbour != direction:
-                    neighbour.send(response)
-        return callback

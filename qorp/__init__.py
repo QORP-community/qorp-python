@@ -1,3 +1,2 @@
-from . import encryption, frontend, messages, nodes, router, transports
-from .nodes import Node
+from . import encryption, frontend, messages, nodes, routing, transports
 from .router import Router
