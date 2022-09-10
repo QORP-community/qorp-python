@@ -58,6 +58,7 @@ class Frontend(ABC, Neighbour):
             #       source (it might allow replay attacks)
             self.sessions[message.source] = session
             response = RouteResponse(self, message.source, source_public_key, public_key)
+            response.sign(self.private_key)
             self.message_callback(response)
         elif isinstance(message, RouteResponse):
             private_key = self.halfopened[message.source]
