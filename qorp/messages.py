@@ -39,6 +39,10 @@ class FrontendData(Message):
 @dataclass  # type: ignore  # (due to mypy issue #5374)
 class NetworkMessage(Message, ABC):
 
+    @property
+    def signed(self) -> bool:
+        return hasattr(self, "signature") and getattr(self, "signature")
+
     @abstractmethod
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         """
