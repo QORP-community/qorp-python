@@ -24,7 +24,7 @@ class Message(ABC):
 
     source: Node
     destination: Node
-    signature: Optional[bytes] = field(init=False, default=None)
+    signature: Optional[bytes]
 
 
 @dataclass
@@ -33,10 +33,7 @@ class FrontendData(Message):
     source: Node
     destination: Node
     payload: bytes
-
-    def sign(self) -> None:
-        # TODO: make this done
-        pass
+    signature: Optional[bytes] = field(init=False, default=None)
 
 
 @dataclass  # type: ignore  # (due to mypy issue #5374)
