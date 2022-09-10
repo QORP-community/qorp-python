@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import NewType, Set
 
 from .encryption import Ed25519PublicKey
@@ -14,6 +15,7 @@ def address_from_pubkey(public_key: Ed25519PublicKey) -> NodeAddress:
     return NodeAddress(address_bytes)
 
 
+@dataclass(frozen=True)
 class Node:
     """
     Network node representation.
@@ -22,7 +24,7 @@ class Node:
 
     address: NodeAddress
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, Node):
             return self.address == other.address
         return NotImplemented
@@ -42,6 +44,10 @@ class KnownNode(Node):
 
     public_key: Ed25519PublicKey
 
+    def __init__(self, public_key: Ed25519PublicKey):
+        self.public_key = public_key
+        super().__init__(address_from_pubkey(public_key))
+
 
 class Neighbour(KnownNode):
     """
@@ -51,6 +57,11 @@ class Neighbour(KnownNode):
 
     listeners: Set[Listener]
     transporters: Set[Transporter]
+
+    def __init__(self, public_key: Ed25519PublicKey):
+        super().__init__(public_key)
+        self.listeners = set()
+        self.transporters = set()
 
     def send(self, message: NetworkMessage) -> None:
         """
