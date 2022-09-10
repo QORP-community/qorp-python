@@ -43,6 +43,9 @@ class NetworkMessage(Message, ABC):
     def signed(self) -> bool:
         return hasattr(self, "signature") and getattr(self, "signature")
 
+    def set_signature(self, signature: bytes) -> None:
+        self.signature = signature
+
     @abstractmethod
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         """
@@ -108,6 +111,7 @@ class RouteRequest(NetworkMessage):
     source: KnownNode
     destination: Union[Node, KnownNode]
     public_key: X25519PublicKey
+    signature: bytes = field(init=False)
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         if isinstance(self.destination, KnownNode):
@@ -137,6 +141,7 @@ class RouteResponse(NetworkMessage):
     destination: KnownNode
     requester_key: X25519PublicKey  # to prevent replay attack in route search process
     public_key: X25519PublicKey
+    signature: bytes = field(init=False)
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         fields = [
@@ -167,6 +172,7 @@ class RouteError(NetworkMessage):
     destination: KnownNode
     route_source: KnownNode
     route_destination: KnownNode
+    signature: bytes = field(init=False)
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         fields = [
