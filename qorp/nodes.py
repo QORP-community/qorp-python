@@ -33,7 +33,7 @@ class Node:
 
 
 class KnownNode(Node):
-    
+
     public_key: Ed25519PublicKey
 
 
