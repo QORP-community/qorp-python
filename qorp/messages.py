@@ -50,14 +50,16 @@ class NetworkMessage(Message, ABC):
 
     @abstractmethod
     def verify(self) -> bool:
-        pass
+        """
+        Verify a message's signature.
+        """
 
 
 @dataclass
 class NetworkData(NetworkMessage):
     """
-    Data message used to transfer payload to other nodes. Typically
-    payload is some higher-layer protocol message.
+    Data message used to transfer payload to other nodes. Payload is bytes
+    that typically represents some higher-layer protocol message.
     """
 
     source: KnownNode
@@ -68,6 +70,9 @@ class NetworkData(NetworkMessage):
     payload: bytes
 
     def decrypt(self, key: ChaCha20Poly1305) -> bytes:
+        """
+        Returns decrypted message's payload.
+        """
         return key.decrypt(self.nonce, self.payload, None)
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
