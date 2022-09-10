@@ -8,6 +8,11 @@ from .transports import Listener, Transporter
 NodeAddress = NewType("NodeAddress", bytes)
 
 
+def address_from_pubkey(public_key: Ed25519PublicKey) -> NodeAddress:
+    address_bytes = pubkey_to_bytes(public_key)
+    return NodeAddress(address_bytes)
+
+
 class Node:
     """
     Network node representation.
