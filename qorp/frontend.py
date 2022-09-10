@@ -37,6 +37,7 @@ class Frontend(ABC, Neighbour):
     halfopened: Dict[Node, X25519PrivateKey]
 
     message_callback: Callable[[Frontend, NetworkMessage], None]
+    data_callback: Callable[[Frontend, bytes], None]
 
     def send(self, message: NetworkMessage) -> None:
         """
@@ -45,6 +46,7 @@ class Frontend(ABC, Neighbour):
         if isinstance(message, NetworkData):
             session = self.sessions[message.source]
             data = session.key.decrypt(message.nonce, message.payload, None)
+            self.data_callback(data)
         elif isinstance(message, RouteRequest):
             private_key = X25519PrivateKey.generate()
             public_key = private_key.public_key()
