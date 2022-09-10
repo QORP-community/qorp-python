@@ -31,7 +31,7 @@ class Transporter(ABC, Generic[Proto]):
     """
     Wrapper around unidirectional link to some network.
 
-    `encoder` is encoding.Encoder instance for serialize messages after
+    `encoder` is encoding.Encoder instance for serialize messages before
     sending.
     """
 
