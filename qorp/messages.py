@@ -62,7 +62,9 @@ class NetworkData(NetworkMessage):
 
     source: KnownNode
     destination: KnownNode
+    signature: bytes = field(init=False)
     nonce: bytes
+    length: int
     payload: bytes
 
     def decrypt(self, key: ChaCha20Poly1305) -> bytes:
