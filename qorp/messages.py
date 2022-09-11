@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Union
 
 from .encryption import Ed25519PrivateKey, X25519PublicKey, ChaCha20Poly1305
+from .encryption import InvalidSignature
 from .encoding import pubkey_to_bytes
 
 from typing import TYPE_CHECKING
@@ -91,8 +92,19 @@ class NetworkData(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        # TODO: make this done
-        pass
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            pubkey_to_bytes(self.destination.public_key),
+            self.nonce,
+            self.length.to_bytes(2, "big"),
+            self.payload,
+        ]
+        message = b"".join(fields)
+        try:
+            self.source.public_key.verify(self.signature, message)
+        except InvalidSignature:
+            return False
+        return True
 
 
 @dataclass
@@ -127,8 +139,21 @@ class RouteRequest(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        # TODO: make this done
-        pass
+        if isinstance(self.destination, KnownNode):
+            dst_field = pubkey_to_bytes(self.destination.public_key)
+        else:
+            dst_field = self.destination.address
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            dst_field,
+            pubkey_to_bytes(self.public_key),
+        ]
+        message = b"".join(fields)
+        try:
+            self.source.public_key.verify(self.signature, message)
+        except InvalidSignature:
+            return False
+        return True
 
 
 @dataclass
@@ -154,8 +179,18 @@ class RouteResponse(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        # TODO: make this done
-        pass
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            pubkey_to_bytes(self.destination.public_key),
+            pubkey_to_bytes(self.requester_key),
+            pubkey_to_bytes(self.public_key),
+        ]
+        message = b"".join(fields)
+        try:
+            self.source.public_key.verify(self.signature, message)
+        except InvalidSignature:
+            return False
+        return True
 
 
 @dataclass
@@ -185,5 +220,15 @@ class RouteError(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        # TODO: make this done
-        pass
+        fields = [
+            pubkey_to_bytes(self.source.public_key),
+            pubkey_to_bytes(self.destination.public_key),
+            pubkey_to_bytes(self.route_source.public_key),
+            pubkey_to_bytes(self.route_destination.public_key),
+        ]
+        message = b"".join(fields)
+        try:
+            self.source.public_key.verify(self.signature, message)
+        except InvalidSignature:
+            return False
+        return True
