@@ -1,6 +1,7 @@
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-from typing import Callable, Union
+from typing import Union
+from typing_extensions import Literal, Protocol
 
 from .encryption import Ed25519PublicKey, X25519PublicKey, pubkey_to_bytes
 from .messages import NetworkData, RouteError, RouteRequest, RouteResponse
@@ -12,21 +13,20 @@ if TYPE_CHECKING:
 
 
 
-class Encoder(ABC, Callable[["NetworkMessage"], bytes]):
+
+class Encoder(Protocol):
     """
     Base class for messages encoders.
     """
 
-    @abstractmethod
-    def __call__(self, message: "NetworkMessage") -> bytes:
+    def __call__(self, message: NetworkMessage) -> bytes:
         pass
 
 
-class Decoder(ABC, Callable[[bytes], "NetworkMessage"]):
+class Decoder(Protocol):
     """
     Base class for messages decoders.
     """
 
-    @abstractmethod
-    def __call__(self, data: bytes) -> "NetworkMessage":
+    def __call__(self, data: bytes) -> NetworkMessage:
         pass
