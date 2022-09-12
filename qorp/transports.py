@@ -47,7 +47,7 @@ class Transporter(ABC, Generic[Proto]):
     encoder: Encoder
 
     @abstractmethod
-    def send(self, message: NetworkMessage):
+    def send(self, message: NetworkMessage) -> None:
         """
         Sends message through specific transport.
         """
