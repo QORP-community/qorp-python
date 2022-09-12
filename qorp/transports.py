@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Callable, Generic, Type, TypeVar
+from typing import ClassVar, Generic, Type, TypeVar
 
 from .encoding import Decoder, Encoder, default_decoder, default_encoder
 
