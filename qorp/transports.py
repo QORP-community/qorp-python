@@ -64,5 +64,8 @@ class Listener(ABC, Generic[Proto]):
     """
 
     protocol: Type[Proto]
-    callback: Callable[[NetworkMessage], None]
     decoder: Decoder
+
+    @abstractmethod
+    def callback(self, message: NetworkMessage) -> None:
+        pass
