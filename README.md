@@ -12,6 +12,7 @@
 - [Installation](#installation)
   - [From pip](#from-pip)
   - [From sources](#from-sources)
+- [Launch tests](#launch-tests)
 - [About QORP](#about-qorp)
 
 ## Installation
@@ -28,6 +29,12 @@ pip install qorp
 git clone https://github.com/jorektheglitch/qorp-python.git
 cd qorp-python
 python setup.py install
+```
+
+## Launch tests
+
+```shell
+python -m tests
 ```
 
 ## About QORP
