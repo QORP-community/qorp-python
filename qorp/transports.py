@@ -15,6 +15,8 @@ Address = TypeVar("Address")
 
 class Protocol(ABC, Generic[Address]):
 
+    alias: ClassVar[str]
+
     @classmethod
     @abstractmethod
     def listen(
