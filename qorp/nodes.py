@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import NewType, Set
 
 from .encryption import Ed25519PublicKey
 from .encoding import pubkey_to_bytes
-from .messages import NetworkMessage
 from .transports import Listener, Transporter
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .messages import NetworkMessage
 
 
 NodeAddress = NewType("NodeAddress", bytes)
