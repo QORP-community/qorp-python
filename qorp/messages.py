@@ -126,6 +126,7 @@ class RouteRequest(NetworkMessage):
     signature: bytes = field(init=False)
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
+        from .nodes import KnownNode  # import here to avoid circular imports
         if isinstance(self.destination, KnownNode):
             dst_field = pubkey_to_bytes(self.destination.public_key)
         else:
@@ -139,6 +140,7 @@ class RouteRequest(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
+        from .nodes import KnownNode  # import here to avoid circular imports
         if isinstance(self.destination, KnownNode):
             dst_field = pubkey_to_bytes(self.destination.public_key)
         else:
