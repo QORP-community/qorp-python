@@ -10,7 +10,7 @@ from typing import Optional, Union
 
 from .encryption import Ed25519PrivateKey, X25519PublicKey, ChaCha20Poly1305
 from .encryption import InvalidSignature
-from .encoding import pubkey_to_bytes
+from .encryption import pubkey_to_bytes
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

@@ -3,8 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import NewType, Set
 
-from .encryption import Ed25519PublicKey
-from .encoding import pubkey_to_bytes
+from .encryption import Ed25519PublicKey, pubkey_to_bytes
 from .transports import Listener, Transporter
 
 from typing import TYPE_CHECKING
