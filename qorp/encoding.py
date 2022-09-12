@@ -49,11 +49,12 @@ class Decoder(Protocol):
 def split(source: bytes, *lengths: int) -> List[bytes]:
     start = 0
     chunks = []
-    for end in lengths:
+    for length in lengths:
+        end = start + length
         chunk = source[start:end]
         chunks.append(chunk)
-        start += end
-    if start < len(source) - 1:
+        start = end
+    if start < len(source):
         chunk = source[start:]
         chunks.append(chunk)
     return chunks
