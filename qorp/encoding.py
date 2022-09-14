@@ -164,6 +164,10 @@ def _decode_sorce_destination(
 def _decode_sorce_destination(
     src: bytes, dst: bytes, unknown_dst: Literal[True] = True
 ) -> Tuple[KnownNode, Node]: ...
+@overload
+def _decode_sorce_destination(
+    src: bytes, dst: bytes, unknown_dst: bool = False
+) -> Union[Tuple[KnownNode, Node], Tuple[KnownNode, KnownNode]]: ...
 def _decode_sorce_destination(
     src: bytes, dst: bytes, unknown_dst: bool = False
 ) -> Union[Tuple[KnownNode, Node], Tuple[KnownNode, KnownNode]]:
