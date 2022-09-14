@@ -77,12 +77,15 @@ def default_encoder(message: NetworkMessage) -> bytes:
     elif isinstance(message, RouteRequest):
         if isinstance(message.destination, KnownNode):
             dst_field = pubkey_to_bytes(message.destination.public_key)
+            dst_type = b"\x00"
         else:
             dst_field = message.destination.address
+            dst_type = b"\x01"
         fields = [
             pubkey_to_bytes(message.source.public_key),
             dst_field,
             TYPE_TO_LABEL[message_type],
+            dst_type,
             pubkey_to_bytes(message.public_key),
             message.signature,
         ]
@@ -125,11 +128,12 @@ def default_decoder(data: bytes) -> NetworkMessage:
         length = int.from_bytes(length_, "big")
         message = NetworkData(source, destination, nonce, length, payload)
     elif message_type is RouteRequest:
-        # TODO: guess there is a full key of target or just a reduced address
-        rreq_scheme = PUBKEY_LENGTH, SIGNATURE_LENGTH
-        pubkey_, signature = split(body, *rreq_scheme)
+        rreq_scheme = 1, PUBKEY_LENGTH, SIGNATURE_LENGTH
+        dst_type, pubkey_, signature = split(body, *rreq_scheme)
+        unknown_dst = bool(dst_type[0])
+        source, rdestination = _decode_sorce_destination(source_, destination_, unknown_dst)  # noqa
         pubkey = X25519PublicKey.from_public_bytes(pubkey_)
-        message = RouteRequest(source, destination, pubkey)
+        message = RouteRequest(source, rdestination, pubkey)
     elif message_type is RouteResponse:
         source, destination = _decode_sorce_destination(source_, destination_)
         rrep_scheme = PUBKEY_LENGTH, PUBKEY_LENGTH, SIGNATURE_LENGTH

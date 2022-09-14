@@ -22,6 +22,7 @@ class Message(ABC):
     """
     Base class for all protocol messages.
     """
+    # TODO:? Add a bytes/enum field for a type of message
 
     source: Node
     destination: Node
@@ -119,6 +120,8 @@ class RouteRequest(NetworkMessage):
     Propagation process for RReq messages must use `split horizon` technique
     to prevent broadcast storms in the network.
     """
+    # TODO?: separate request class to DefaultRequest and KnownRequest for
+    #        special cases of destination field type
 
     source: KnownNode
     destination: Union[Node, KnownNode]
