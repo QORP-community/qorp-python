@@ -125,6 +125,15 @@ class RouteRequest(NetworkMessage):
     public_key: X25519PublicKey
     signature: bytes = field(init=False)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, RouteRequest):
+            return NotImplemented
+        return all((
+            self.source == other.source,
+            self.destination == other.destination,
+            pubkey_to_bytes(self.public_key) == pubkey_to_bytes(other.public_key),
+        ))
+
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         from .nodes import KnownNode  # import here to avoid circular imports
         if isinstance(self.destination, KnownNode):
@@ -169,6 +178,16 @@ class RouteResponse(NetworkMessage):
     requester_key: X25519PublicKey  # to prevent replay attack in route search process
     public_key: X25519PublicKey
     signature: bytes = field(init=False)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, RouteResponse):
+            return NotImplemented
+        return all((
+            self.source == other.source,
+            self.destination == other.destination,
+            pubkey_to_bytes(self.requester_key) == pubkey_to_bytes(other.requester_key),
+            pubkey_to_bytes(self.public_key) == pubkey_to_bytes(other.public_key),
+        ))
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         fields = [
