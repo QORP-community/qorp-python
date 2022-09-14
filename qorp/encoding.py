@@ -167,7 +167,8 @@ def _decode_sorce_destination(
 def _decode_sorce_destination(
     src: bytes, dst: bytes, unknown_dst: bool = False
 ) -> Union[Tuple[KnownNode, Node], Tuple[KnownNode, KnownNode]]:
-    from .nodes import KnownNode, NodeAddress  # import here to avoid circular imports
+    # import here to avoid circular imports
+    from .nodes import Node, KnownNode, NodeAddress
     src_key = Ed25519PublicKey.from_public_bytes(src)
     source = KnownNode(src_key)
     if unknown_dst:
