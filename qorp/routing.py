@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 from .messages import NetworkMessage
 from .messages import NetworkData, RouteRequest, RouteResponse, RouteError
 from .nodes import KnownNode, Node, Neighbour
-from .transports import Listener
+from .transports import Connection
 
 
 RRepInfo = Tuple[Neighbour, RouteResponse]
@@ -24,7 +24,7 @@ EMPTY_SET: Set["Future[RRepInfo]"] = set()
 class MessagesForwarder:
 
     router: Router
-    broadcast_listeners: Set[Listener]
+    broadcasters: Set[Connection]  # type: ignore
     neighbours: Set[Neighbour]
     routes: Dict[Tuple[KnownNode, KnownNode], Tuple[Neighbour, Neighbour]]
     directions: Dict[KnownNode, Neighbour]
@@ -33,7 +33,7 @@ class MessagesForwarder:
 
     def __init__(self, router: Router) -> None:
         self.router = router
-        self.broadcast_listeners = set()
+        self.broadcasters = set()
         self.neighbours = {router}
         self.routes = {(router, router): (router, router)}
         self.directions = {router: router}

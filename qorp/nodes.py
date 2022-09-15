@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import NewType, Set
+from typing import List, NewType
 
 from .encryption import Ed25519PublicKey, pubkey_to_bytes
-from .transports import Listener, Transporter
+from .transports import Connection
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -59,13 +59,11 @@ class Neighbour(KnownNode):
     Listeners and transporters are sets of unidirectional links.
     """
 
-    listeners: Set[Listener]
-    transporters: Set[Transporter]
+    connections: List[Connection]  # type: ignore
 
     def __init__(self, public_key: Ed25519PublicKey):
         super().__init__(public_key)
-        self.listeners = set()
-        self.transporters = set()
+        self.connections = []
 
     def send(self, message: NetworkMessage) -> None:
         """

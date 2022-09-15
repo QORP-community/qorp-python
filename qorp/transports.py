@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import ClassVar, Generic, Type, TypeVar
+from typing import Callable, ClassVar, Generic, Type, TypeVar
 
 from .encoding import Decoder, Encoder, default_decoder, default_encoder
 
@@ -16,56 +16,65 @@ Address = TypeVar("Address")
 class Protocol(ABC, Generic[Address]):
 
     alias: ClassVar[str]
+    address: Address
 
-    @classmethod
-    @abstractmethod
-    def listen(
-        cls: Type[Proto], address: Address, decoder: Decoder = default_decoder
-    ) -> Listener[Proto]:
-        pass
+    def __init__(self, address: Address) -> None:
+        self.address = address
 
-    @classmethod
     @abstractmethod
     def connect(
-        cls: Type[Proto], address: Address, encoder: Encoder = default_encoder
-    ) -> Transporter[Proto]:
+        self: Proto,
+        decoder: Decoder = default_decoder,
+        encoder: Encoder = default_encoder,
+    ) -> Connection[Proto]:
+        pass
+
+    @abstractmethod
+    def listen(
+        self: Proto,
+        connection_callback: Callable[[Address, Connection[Proto]], None],
+        decoder: Decoder = default_decoder,
+        encoder: Encoder = default_encoder,
+    ) -> Server[Proto]:
         pass
 
 
 Proto = TypeVar("Proto", bound=Protocol)
 
 
-class Transporter(ABC, Generic[Proto]):
+class Connection(ABC, Generic[Proto]):
     """
-    Wrapper around unidirectional link to some network.
+    Wrapper around bidirectional link from/to some network.
 
-    `encoder` is encoding.Encoder instance for serialize messages before
-    sending.
+    `decoder` is encoding.Decoder instance for deserialize received messages.
     """
 
-    protocol: Type[Proto]
+    protocol: Proto
+    decoder: Decoder
     encoder: Encoder
 
     @abstractmethod
     def send(self, message: NetworkMessage) -> None:
         """
-        Sends message through specific transport.
+        Sends message through specific connection.
         """
-
-
-class Listener(ABC, Generic[Proto]):
-    """
-    Wrapper around unidirectional link from some network.
-
-    `callback` is a callback function which must be called on each message
-    that listener fetches from the network.
-
-    `decoder` is encoding.Decoder instance for deserialize received messages.
-    """
-
-    protocol: Type[Proto]
-    decoder: Decoder
 
     @abstractmethod
     def callback(self, message: NetworkMessage) -> None:
+        """
+        Callback function for messages received from specific connection.
+        """
+
+
+class Server(ABC, Generic[Proto]):
+
+    protocol: Proto
+    decoder: Decoder
+    encoder: Encoder
+
+    def connection_callback(
+        self,
+        address,
+        connection: Connection[Proto]
+    ) -> None:
         pass
