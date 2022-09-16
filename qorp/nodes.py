@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from typing import List, NewType
 
 from .encryption import Ed25519PublicKey, pubkey_to_bytes
-from .transports import Connection
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from .transports import Connection
     from .messages import NetworkMessage
 
 
