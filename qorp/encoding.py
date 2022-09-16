@@ -6,10 +6,10 @@ from typing_extensions import Literal, Protocol
 
 from .encryption import Ed25519PublicKey, X25519PublicKey, pubkey_to_bytes
 from .messages import NetworkData, RouteError, RouteRequest, RouteResponse
+from .nodes import Node, KnownNode
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from .nodes import Node, KnownNode
     from .messages import NetworkMessage
 
 
@@ -61,7 +61,6 @@ def split(source: bytes, *lengths: int) -> List[bytes]:
 
 
 def default_encoder(message: NetworkMessage) -> bytes:
-    from .nodes import KnownNode  # import here to avoid circular imports
     fields: List[bytes]
     message_type = type(message)
     if isinstance(message, NetworkData):
@@ -114,7 +113,6 @@ def default_encoder(message: NetworkMessage) -> bytes:
 
 
 def default_decoder(data: bytes) -> NetworkMessage:
-    from .nodes import KnownNode  # import here to avoid circular imports
     message: NetworkMessage
     head_scheme = PUBKEY_LENGTH, PUBKEY_LENGTH, 1
     source_, destination_, type_label, body = split(data, *head_scheme)
@@ -175,8 +173,6 @@ def _decode_sorce_destination(
 def _decode_sorce_destination(
     src: bytes, dst: bytes, unknown_dst: bool = False
 ) -> Union[Tuple[KnownNode, Node], Tuple[KnownNode, KnownNode]]:
-    # import here to avoid circular imports
-    from .nodes import Node, KnownNode, NodeAddress
     src_key = Ed25519PublicKey.from_public_bytes(src)
     source = KnownNode(src_key)
     if unknown_dst:
