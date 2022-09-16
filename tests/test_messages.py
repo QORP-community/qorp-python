@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from qorp.encoding import DefaultCodec
+from qorp.codecs import DefaultCodec
 from qorp.encryption import Ed25519PrivateKey, X25519PrivateKey
 from qorp.messages import NetworkData, RouteRequest, RouteResponse, RouteError
 from qorp.nodes import KnownNode

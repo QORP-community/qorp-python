@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Callable, ClassVar, Generic, TypeVar
 
-from .encoding import MessagesCodec
+from .codecs import MessagesCodec
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
