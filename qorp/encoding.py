@@ -6,7 +6,7 @@ from typing_extensions import Literal, Protocol
 
 from .encryption import Ed25519PublicKey, X25519PublicKey, pubkey_to_bytes
 from .messages import NetworkData, RouteError, RouteRequest, RouteResponse
-from .nodes import Node, KnownNode
+from .nodes import Node, KnownNode, NodeAddress
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
