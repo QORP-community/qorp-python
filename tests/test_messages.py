@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from qorp.encoding import default_decoder, default_encoder
+from qorp.encoding import DefaultCodec
 from qorp.encryption import Ed25519PrivateKey, X25519PrivateKey
 from qorp.messages import NetworkData, RouteRequest, RouteResponse, RouteError
 from qorp.nodes import KnownNode
@@ -43,9 +43,10 @@ class TestMessageSignVerify(TestCase):
         self.assertTrue(self.rerr.verify())
 
 
-class TestMessageDefaultEncodingDecoding(TestCase):
+class TestDefaultCodec(TestCase):
 
     def setUp(self) -> None:
+        self.codec = DefaultCodec()
         self.data = NetworkData(src, dst, b"\x00"*12, 1, b"\x00")
         self.rreq = RouteRequest(src, dst, exchange_pubkey)
         self.rrep = RouteResponse(src, dst, exchange_pubkey, exchange_pubkey)
@@ -54,21 +55,21 @@ class TestMessageDefaultEncodingDecoding(TestCase):
             msg.sign(src_privkey)
 
     def test_default_encodedecode_networkdata(self) -> None:
-        encoded = default_encoder(self.data)
-        decoded = default_decoder(encoded)
+        encoded = self.codec.encode(self.data)
+        decoded = self.codec.decode(encoded)
         self.assertEqual(self.data, decoded)
 
     def test_default_encodedecode_routerequest(self) -> None:
-        encoded = default_encoder(self.rreq)
-        decoded = default_decoder(encoded)
+        encoded = self.codec.encode(self.rreq)
+        decoded = self.codec.decode(encoded)
         self.assertEqual(self.rreq, decoded)
 
     def test_default_encodedecode_routeresponse(self) -> None:
-        encoded = default_encoder(self.rrep)
-        decoded = default_decoder(encoded)
+        encoded = self.codec.encode(self.rrep)
+        decoded = self.codec.decode(encoded)
         self.assertEqual(self.rrep, decoded)
 
     def test_default_encodedecode_routeerror(self) -> None:
-        encoded = default_encoder(self.rerr)
-        decoded = default_decoder(encoded)
+        encoded = self.codec.encode(self.rerr)
+        decoded = self.codec.decode(encoded)
         self.assertEqual(self.rerr, decoded)

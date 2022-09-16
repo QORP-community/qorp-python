@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Callable, ClassVar, Generic, Type, TypeVar
+from typing import Callable, ClassVar, Generic, TypeVar
 
-from .encoding import Decoder, Encoder, default_decoder, default_encoder
+from .encoding import MessagesCodec
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 
 Address = TypeVar("Address")
+DataType = TypeVar("DataType")
 
 
 class Protocol(ABC, Generic[Address]):
@@ -24,34 +25,29 @@ class Protocol(ABC, Generic[Address]):
     @abstractmethod
     def connect(
         self: Proto,
-        decoder: Decoder = default_decoder,
-        encoder: Encoder = default_encoder,
-    ) -> Connection[Proto]:
+        codec: MessagesCodec[DataType]
+    ) -> Connection[Proto, DataType]:
         pass
 
     @abstractmethod
     def listen(
         self: Proto,
-        connection_callback: Callable[[Address, Connection[Proto]], None],
-        decoder: Decoder = default_decoder,
-        encoder: Encoder = default_encoder,
-    ) -> Server[Proto]:
+        callback: Callable[[Address, Connection[Proto, DataType]], None],
+        codec: MessagesCodec[DataType]
+    ) -> Server[Proto, DataType]:
         pass
 
 
 Proto = TypeVar("Proto", bound=Protocol)
 
 
-class Connection(ABC, Generic[Proto]):
+class Connection(ABC, Generic[Proto, DataType]):
     """
     Wrapper around bidirectional link from/to some network.
-
-    `decoder` is encoding.Decoder instance for deserialize received messages.
     """
 
     protocol: Proto
-    decoder: Decoder
-    encoder: Encoder
+    codec: MessagesCodec[DataType]
 
     @abstractmethod
     def send(self, message: NetworkMessage) -> None:
@@ -66,15 +62,14 @@ class Connection(ABC, Generic[Proto]):
         """
 
 
-class Server(ABC, Generic[Proto]):
+class Server(ABC, Generic[Proto, DataType]):
 
     protocol: Proto
-    decoder: Decoder
-    encoder: Encoder
+    codec: MessagesCodec[DataType]
 
     def connection_callback(
         self,
         address,
-        connection: Connection[Proto]
+        connection: Connection[Proto, DataType]
     ) -> None:
         pass

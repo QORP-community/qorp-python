@@ -1,8 +1,9 @@
 from __future__ import annotations
+from abc import ABC, abstractmethod
 
-from typing import Dict, List, Tuple, Type, Union
+from typing import ClassVar, Dict, Generic, List, Tuple, Type, TypeVar, Union
 from typing import overload
-from typing_extensions import Literal, Protocol
+from typing_extensions import Literal
 
 from .encryption import Ed25519PublicKey, X25519PublicKey, pubkey_to_bytes
 from .messages import NetworkData, RouteError, RouteRequest, RouteResponse
@@ -27,23 +28,134 @@ LABEL_TO_TYPE: Dict[bytes, Type[NetworkMessage]] = {
     label: type for type, label in TYPE_TO_LABEL.items()
 }
 
+Encoded = TypeVar("Encoded")
 
-class Encoder(Protocol):
-    """
-    Base class for messages encoders.
-    """
 
-    def __call__(self, message: NetworkMessage) -> bytes:
+class MessagesCodec(ABC, Generic[Encoded]):
+
+    @abstractmethod
+    def encode(self, message: NetworkMessage) -> Encoded:
+        pass
+
+    @abstractmethod
+    def decode(self, input: Encoded) -> NetworkMessage:
         pass
 
 
-class Decoder(Protocol):
-    """
-    Base class for messages decoders.
-    """
+class DefaultCodec(MessagesCodec[bytes]):
 
-    def __call__(self, data: bytes) -> NetworkMessage:
-        pass
+    head_scheme: ClassVar[Tuple[int, ...]] = (PUBKEY_LENGTH, PUBKEY_LENGTH, 1)
+    body_schemes: ClassVar[Dict[Type[NetworkMessage], Tuple[int, ...]]] = {
+        NetworkData: (CHACHA_NONCE_LENGTH, 2, SIGNATURE_LENGTH),
+        RouteRequest: (1, PUBKEY_LENGTH, SIGNATURE_LENGTH),
+        RouteResponse: (PUBKEY_LENGTH, PUBKEY_LENGTH, SIGNATURE_LENGTH),
+        RouteError: (PUBKEY_LENGTH, PUBKEY_LENGTH, SIGNATURE_LENGTH)
+    }
+    type_label: ClassVar[Dict[Type[NetworkMessage], bytes]] = {
+        NetworkData: b"\x01",
+        RouteRequest: b"\x02",
+        RouteResponse: b"\x03",
+        RouteError: b"\x04"
+    }
+    label_type: ClassVar[Dict[bytes, Type[NetworkMessage]]] = {
+        label: type for type, label in type_label.items()
+    }
+
+    def encode(self, message: NetworkMessage) -> bytes:
+        fields: List[bytes]
+        MessageType = type(message)
+        if isinstance(message, NetworkData):
+            fields = [
+                pubkey_to_bytes(message.source.public_key),
+                pubkey_to_bytes(message.destination.public_key),
+                self.type_label[MessageType],
+                message.nonce,
+                message.length.to_bytes(2, "big"),
+                message.signature,
+                message.payload,
+            ]
+        elif isinstance(message, RouteRequest):
+            if isinstance(message.destination, KnownNode):
+                dst_field = pubkey_to_bytes(message.destination.public_key)
+                dst_type = b"\x00"
+            else:
+                dst_field = message.destination.address
+                dst_type = b"\x01"
+            fields = [
+                pubkey_to_bytes(message.source.public_key),
+                dst_field,
+                self.type_label[MessageType],
+                dst_type,
+                pubkey_to_bytes(message.public_key),
+                message.signature,
+            ]
+        elif isinstance(message, RouteResponse):
+            fields = [
+                pubkey_to_bytes(message.source.public_key),
+                pubkey_to_bytes(message.destination.public_key),
+                self.type_label[MessageType],
+                pubkey_to_bytes(message.requester_key),
+                pubkey_to_bytes(message.public_key),
+                message.signature,
+            ]
+        elif isinstance(message, RouteError):
+            fields = [
+                pubkey_to_bytes(message.source.public_key),
+                pubkey_to_bytes(message.destination.public_key),
+                self.type_label[MessageType],
+                pubkey_to_bytes(message.route_source.public_key),
+                pubkey_to_bytes(message.route_destination.public_key),
+                message.signature,
+            ]
+        else:
+            raise TypeError(f"Unknown message type: {MessageType.__name__}")
+        raw = b"".join(fields)
+        return raw
+
+    def decode(self, encoded: bytes) -> NetworkMessage:
+        message: NetworkMessage
+        fields: Union[
+            Tuple[KnownNode, KnownNode, bytes, int, bytes],
+            Tuple[KnownNode, Union[Node, KnownNode], X25519PublicKey],
+            Tuple[KnownNode, KnownNode, X25519PublicKey, X25519PublicKey],
+            Tuple[KnownNode, KnownNode, KnownNode, KnownNode],
+        ]
+        source_, destination_, type_label, body = split(encoded, *self.head_scheme)
+        MessageType = self.label_type.get(type_label)
+        if MessageType is None:
+            raise ValueError(f"Unknown message type label: {type_label!r}")
+        body_scheme = self.body_schemes[MessageType]
+        raw_fields = split(body, *body_scheme)
+        if MessageType is NetworkData:
+            source, destination = _decode_sorce_destination(source_, destination_)
+            nonce, length_, signature, payload = raw_fields
+            length = int.from_bytes(length_, "big")
+            fields = source, destination, nonce, length, payload
+        elif MessageType is RouteRequest:
+            dst_type, pubkey_, signature = raw_fields
+            unknown_dst = bool(dst_type[0])
+            source, rdestination = _decode_sorce_destination(source_, destination_, unknown_dst)  # noqa
+            pubkey = X25519PublicKey.from_public_bytes(pubkey_)
+            fields = source, rdestination, pubkey
+        elif MessageType is RouteResponse:
+            source, destination = _decode_sorce_destination(source_, destination_)
+            requester_pubkey_, pubkey_, signature = raw_fields
+            requester_pubkey = X25519PublicKey.from_public_bytes(requester_pubkey_)
+            pubkey = X25519PublicKey.from_public_bytes(pubkey_)
+            fields = source, destination, requester_pubkey, pubkey
+        elif MessageType is RouteError:
+            source, destination = _decode_sorce_destination(source_, destination_)
+            route_src_, route_dst_, signature = raw_fields
+            route_src_key = Ed25519PublicKey.from_public_bytes(route_src_)
+            route_dst_key = Ed25519PublicKey.from_public_bytes(route_dst_)
+            route_src = KnownNode(route_src_key)
+            route_dst = KnownNode(route_dst_key)
+            fields = source, destination, route_src, route_dst
+        else:
+            raise ValueError(f"Unknown message type: {MessageType.__name__}")
+        message = MessageType(*fields)
+        message.set_signature(signature)
+        return message
 
 
 def split(source: bytes, *lengths: int) -> List[bytes]:
@@ -58,100 +170,6 @@ def split(source: bytes, *lengths: int) -> List[bytes]:
         chunk = source[start:]
         chunks.append(chunk)
     return chunks
-
-
-def default_encoder(message: NetworkMessage) -> bytes:
-    fields: List[bytes]
-    message_type = type(message)
-    if isinstance(message, NetworkData):
-        fields = [
-            pubkey_to_bytes(message.source.public_key),
-            pubkey_to_bytes(message.destination.public_key),
-            TYPE_TO_LABEL[message_type],
-            message.nonce,
-            message.length.to_bytes(2, "big"),
-            message.signature,
-            message.payload,
-        ]
-    elif isinstance(message, RouteRequest):
-        if isinstance(message.destination, KnownNode):
-            dst_field = pubkey_to_bytes(message.destination.public_key)
-            dst_type = b"\x00"
-        else:
-            dst_field = message.destination.address
-            dst_type = b"\x01"
-        fields = [
-            pubkey_to_bytes(message.source.public_key),
-            dst_field,
-            TYPE_TO_LABEL[message_type],
-            dst_type,
-            pubkey_to_bytes(message.public_key),
-            message.signature,
-        ]
-    elif isinstance(message, RouteResponse):
-        fields = [
-            pubkey_to_bytes(message.source.public_key),
-            pubkey_to_bytes(message.destination.public_key),
-            TYPE_TO_LABEL[message_type],
-            pubkey_to_bytes(message.requester_key),
-            pubkey_to_bytes(message.public_key),
-            message.signature,
-        ]
-    elif isinstance(message, RouteError):
-        fields = [
-            pubkey_to_bytes(message.source.public_key),
-            pubkey_to_bytes(message.destination.public_key),
-            TYPE_TO_LABEL[message_type],
-            pubkey_to_bytes(message.route_source.public_key),
-            pubkey_to_bytes(message.route_destination.public_key),
-            message.signature,
-        ]
-    else:
-        raise TypeError(f"Unknown message type: {message_type.__name__}")
-    raw = b"".join(fields)
-    return raw
-
-
-def default_decoder(data: bytes) -> NetworkMessage:
-    message: NetworkMessage
-    head_scheme = PUBKEY_LENGTH, PUBKEY_LENGTH, 1
-    source_, destination_, type_label, body = split(data, *head_scheme)
-    message_type = LABEL_TO_TYPE.get(type_label)
-    if message_type is None:
-        raise ValueError(f"Incorrect message type label: {type_label!r}")
-    if message_type is NetworkData:
-        source, destination = _decode_sorce_destination(source_, destination_)
-        data_scheme = CHACHA_NONCE_LENGTH, 2, SIGNATURE_LENGTH
-        nonce, length_, signature, payload = split(body, *data_scheme)
-        length = int.from_bytes(length_, "big")
-        message = NetworkData(source, destination, nonce, length, payload)
-    elif message_type is RouteRequest:
-        rreq_scheme = 1, PUBKEY_LENGTH, SIGNATURE_LENGTH
-        dst_type, pubkey_, signature = split(body, *rreq_scheme)
-        unknown_dst = bool(dst_type[0])
-        source, rdestination = _decode_sorce_destination(source_, destination_, unknown_dst)  # noqa
-        pubkey = X25519PublicKey.from_public_bytes(pubkey_)
-        message = RouteRequest(source, rdestination, pubkey)
-    elif message_type is RouteResponse:
-        source, destination = _decode_sorce_destination(source_, destination_)
-        rrep_scheme = PUBKEY_LENGTH, PUBKEY_LENGTH, SIGNATURE_LENGTH
-        requester_pubkey_, pubkey_, signature = split(body, *rrep_scheme)
-        requester_pubkey = X25519PublicKey.from_public_bytes(requester_pubkey_)
-        pubkey = X25519PublicKey.from_public_bytes(pubkey_)
-        message = RouteResponse(source, destination, requester_pubkey, pubkey)
-    elif message_type is RouteError:
-        source, destination = _decode_sorce_destination(source_, destination_)
-        rerr_scheme = PUBKEY_LENGTH, PUBKEY_LENGTH, SIGNATURE_LENGTH
-        route_src_, route_dst_, signature = split(body, *rerr_scheme)
-        route_src_key = Ed25519PublicKey.from_public_bytes(route_src_)
-        route_dst_key = Ed25519PublicKey.from_public_bytes(route_dst_)
-        route_src = KnownNode(route_src_key)
-        route_dst = KnownNode(route_dst_key)
-        message = RouteError(source, destination, route_src, route_dst)
-    else:
-        raise ValueError(f"Unknown message type: {message_type.__name__}")
-    message.set_signature(signature)
-    return message
 
 
 @overload
