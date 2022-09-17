@@ -18,7 +18,7 @@ from .transports import Connection
 RRepInfo = Tuple[Neighbour, RouteResponse]
 
 RREQ_TIMEOUT = 10
-EMPTY_SET: Set["Future[RRepInfo]"] = set()
+EMPTY_SET: Set[Future[RRepInfo]] = set()
 
 
 class MessagesForwarder:
@@ -28,8 +28,8 @@ class MessagesForwarder:
     neighbours: Set[Neighbour]
     routes: Dict[Tuple[KnownNode, KnownNode], Tuple[Neighbour, Neighbour]]
     directions: Dict[KnownNode, Neighbour]
-    pending_requests: Dict[Node, Set["Future[RRepInfo]"]]
-    _requests_details: "WeakKeyDictionary[Future[RRepInfo], RouteRequest]"
+    pending_requests: Dict[Node, Set[Future[RRepInfo]]]
+    _requests_details: WeakKeyDictionary[Future[RRepInfo], RouteRequest]
 
     def __init__(self, router: Router) -> None:
         self.router = router
