@@ -34,23 +34,23 @@ class TestEchoFrontend(Frontend):
         self.router.send(echo_message)
 
 
-class TestProtocol(Protocol["TestConnection"]):
+class TestProtocol(Protocol["TestConnection", bytes]):
 
     address: TestConnection
     alias = "testproto"
 
     def connect(
-        self, codec: MessagesCodec[bytes], delay: float = 0.1
+        self, codec: MessagesCodec[bytes] = DefaultCodec(), delay: float = 0.1
     ) -> Connection[TestProtocol, bytes]:
         return TestConnection(self, codec, delay)
 
     def listen(
         self,
-        connection_callback: Callable[[TestConnection, Connection[TestProtocol, bytes]], None],
-        codec: MessagesCodec[bytes],
+        callback: Callable[[TestConnection, Connection[TestProtocol, bytes]], None],
+        codec: MessagesCodec[bytes] = DefaultCodec(),
         delay: float = 0.1
     ) -> Server[TestProtocol, bytes]:
-        return TestServer(self, connection_callback, codec, delay)
+        return TestServer(self, callback, codec, delay)
 
 
 class TestConnection(Connection[TestProtocol, bytes]):
