@@ -179,19 +179,19 @@ def split(source: bytes, *lengths: int) -> List[bytes]:
 def _decode_sorce_destination(
     src: bytes, dst: bytes
 ) -> Tuple[KnownNode, KnownNode]: ...
-@overload
+@overload  # noqa: E302
 def _decode_sorce_destination(
     src: bytes, dst: bytes, unknown_dst: Literal[False] = False
 ) -> Tuple[KnownNode, KnownNode]: ...
-@overload
+@overload  # noqa: E302
 def _decode_sorce_destination(
     src: bytes, dst: bytes, unknown_dst: Literal[True] = True
 ) -> Tuple[KnownNode, Node]: ...
-@overload
+@overload  # noqa: E302
 def _decode_sorce_destination(
     src: bytes, dst: bytes, unknown_dst: bool = False
 ) -> Union[Tuple[KnownNode, Node], Tuple[KnownNode, KnownNode]]: ...
-def _decode_sorce_destination(
+def _decode_sorce_destination(    # noqa: E302
     src: bytes, dst: bytes, unknown_dst: bool = False
 ) -> Union[Tuple[KnownNode, Node], Tuple[KnownNode, KnownNode]]:
     src_key = Ed25519PublicKey.from_public_bytes(src)
