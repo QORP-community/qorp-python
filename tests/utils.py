@@ -5,8 +5,10 @@ import asyncio
 from typing import Callable, List
 
 from qorp.codecs import MessagesCodec, DEFAULT_CODEC
+from qorp.encryption import Ed25519PrivateKey, Ed25519PublicKey
 from qorp.frontend import Frontend
 from qorp.messages import FrontendData, NetworkMessage
+from qorp.nodes import Neighbour
 from qorp.router import Router
 from qorp.transports import Protocol, Connection, Server
 
@@ -18,6 +20,20 @@ def echo(message: FrontendData) -> FrontendData:
         message.payload
     )
     return echo
+
+
+class NeignbourMock(Neighbour):
+
+    received: List[NetworkMessage]
+
+    def __init__(self, public_key: Ed25519PublicKey = None):
+        if public_key is None:
+            private_key = Ed25519PrivateKey.generate()
+            public_key = private_key.public_key()
+        super().__init__(public_key)
+
+    def send(self, message: NetworkMessage) -> None:
+        self.received.append(message)
 
 
 class RecorderFrontend(Frontend):
