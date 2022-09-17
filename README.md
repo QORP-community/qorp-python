@@ -1,6 +1,7 @@
 # qorp-python
 
 [![wakatime](https://wakatime.com/badge/github/jorektheglitch/qorp-python.svg)](https://wakatime.com/badge/github/jorektheglitch/qorp-python)
+![PyPI](https://img.shields.io/pypi/v/qorp)
 
 `qorp-python` is QORP implementation written in python.
 
