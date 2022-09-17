@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 
-from typing import Callable, List
+from typing import Callable, List, Union
 
 from qorp.codecs import MessagesCodec, DEFAULT_CODEC
 from qorp.encryption import Ed25519PrivateKey, Ed25519PublicKey
@@ -10,6 +10,7 @@ from qorp.frontend import Frontend
 from qorp.messages import FrontendData, NetworkMessage
 from qorp.nodes import Neighbour
 from qorp.router import Router
+from qorp.routing import MessagesForwarder
 from qorp.transports import Protocol, Connection, Server
 
 
@@ -33,6 +34,23 @@ class NeignbourMock(Neighbour):
         super().__init__(public_key)
 
     def send(self, message: NetworkMessage) -> None:
+        self.received.append(message)
+
+
+class RouterMock(Router):
+
+    received: List[Union[NetworkMessage, FrontendData]]
+
+    def __init__(
+        self,
+        private_key: Ed25519PrivateKey,
+        frontend: Frontend = None,
+        frontend_factory: Callable[[Router], Frontend] = None,
+        forwarder_factory: Callable[[Router], MessagesForwarder] = MessagesForwarder
+    ) -> None:
+        super().__init__(private_key, frontend, frontend_factory, forwarder_factory)
+
+    def send(self, message: Union[NetworkMessage, FrontendData]) -> None:
         self.received.append(message)
 
 
