@@ -20,7 +20,7 @@ def echo(message: FrontendData) -> FrontendData:
     return echo
 
 
-class TestEchoFrontend(Frontend):
+class RecorderFrontend(Frontend):
 
     received: List[FrontendData]
 
@@ -30,6 +30,14 @@ class TestEchoFrontend(Frontend):
 
     def message_callback(self, message: FrontendData) -> None:
         self.received.append(message)
+
+
+class EchoFrontend(RecorderFrontend):
+
+    received: List[FrontendData]
+
+    def message_callback(self, message: FrontendData) -> None:
+        super().message_callback(message)
         echo_message = echo(message)
         self.router.send(echo_message)
 
