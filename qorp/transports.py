@@ -14,7 +14,7 @@ Address = TypeVar("Address")
 DataType = TypeVar("DataType")
 
 
-class Protocol(ABC, Generic[Address]):
+class Protocol(ABC, Generic[Address, DataType]):
 
     alias: ClassVar[str]
     address: Address
