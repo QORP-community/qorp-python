@@ -13,8 +13,8 @@ from qorp.transports import Protocol, Connection, Server
 
 def echo(message: FrontendData) -> FrontendData:
     echo = FrontendData(
-        message.destination, 
-        message.source, 
+        message.destination,
+        message.source,
         message.payload
     )
     return echo
@@ -87,5 +87,9 @@ class TestServer(Server[TestProtocol, bytes]):
         self.codec = codec
         self.delay = delay
 
-    def connection_callback(self, address: TestConnection, connection: Connection[TestProtocol, bytes]) -> None:
+    def connection_callback(
+        self,
+        address: TestConnection,
+        connection: Connection[TestProtocol, bytes]
+    ) -> None:
         self.callback(address, connection)
