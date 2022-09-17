@@ -4,7 +4,7 @@ import asyncio
 
 from typing import Callable, List
 
-from qorp.codecs import MessagesCodec, DefaultCodec
+from qorp.codecs import MessagesCodec, DEFAULT_CODEC
 from qorp.frontend import Frontend
 from qorp.messages import FrontendData, NetworkMessage
 from qorp.router import Router
@@ -40,14 +40,14 @@ class TestProtocol(Protocol["TestConnection", bytes]):
     alias = "testproto"
 
     def connect(
-        self, codec: MessagesCodec[bytes] = DefaultCodec(), delay: float = 0.1
+        self, codec: MessagesCodec[bytes] = DEFAULT_CODEC, delay: float = 0.1
     ) -> Connection[TestProtocol, bytes]:
         return TestConnection(self, codec, delay)
 
     def listen(
         self,
         callback: Callable[[TestConnection, Connection[TestProtocol, bytes]], None],
-        codec: MessagesCodec[bytes] = DefaultCodec(),
+        codec: MessagesCodec[bytes] = DEFAULT_CODEC,
         delay: float = 0.1
     ) -> Server[TestProtocol, bytes]:
         return TestServer(self, callback, codec, delay)

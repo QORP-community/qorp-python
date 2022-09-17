@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from qorp.codecs import DefaultCodec
+from qorp.codecs import DEFAULT_CODEC
 from qorp.encryption import Ed25519PrivateKey, X25519PrivateKey
 from qorp.messages import NetworkData, RouteRequest, RouteResponse, RouteError
 from qorp.nodes import KnownNode
@@ -46,7 +46,7 @@ class TestMessageSignVerify(TestCase):
 class TestDefaultCodec(TestCase):
 
     def setUp(self) -> None:
-        self.codec = DefaultCodec()
+        self.codec = DEFAULT_CODEC
         self.data = NetworkData(src, dst, b"\x00"*12, 1, b"\x00")
         self.rreq = RouteRequest(src, dst, exchange_pubkey)
         self.rrep = RouteResponse(src, dst, exchange_pubkey, exchange_pubkey)

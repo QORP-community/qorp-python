@@ -158,6 +158,9 @@ class DefaultCodec(MessagesCodec[bytes]):
         return message
 
 
+DEFAULT_CODEC = DefaultCodec()
+
+
 def split(source: bytes, *lengths: int) -> List[bytes]:
     start = 0
     chunks = []
