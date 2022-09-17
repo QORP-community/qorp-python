@@ -69,4 +69,5 @@ class Neighbour(KnownNode):
         """
         Sends message to neighbour using one of neighbour's transporters.
         """
-        # TODO: implement selecting and using transporter from transporters set
+        # TODO?: Replace this with some connection selecting procedure
+        self.connections[0].send(message)
