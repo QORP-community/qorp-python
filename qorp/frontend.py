@@ -23,9 +23,6 @@ class Frontend(ABC):
 
     router: Router
 
-    def __init__(self, router: Router) -> None:
-        super().__init__()
-
     @abstractmethod
     def message_callback(self, message: FrontendData) -> None:
         """
