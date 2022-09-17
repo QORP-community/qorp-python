@@ -19,9 +19,6 @@ class Protocol(ABC, Generic[Address]):
     alias: ClassVar[str]
     address: Address
 
-    def __init__(self, address: Address) -> None:
-        self.address = address
-
     @abstractmethod
     def connect(
         self: Proto,
