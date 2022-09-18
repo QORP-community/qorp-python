@@ -75,8 +75,7 @@ class MessagesForwarder:
             loop = asyncio.get_running_loop()
             future: Future[RRepInfo] = loop.create_future()
             future.add_done_callback(self._done_request(target))
-            ttl_kill = self._rreq_ttl_killer(target, future)
-            loop.call_later(RREQ_TIMEOUT, ttl_kill)
+            set_ttl(future, RREQ_TIMEOUT)
             self._requests_details[future] = request
             requests.add(future)
             if self.is_unique_rreq(request, exclude=future):
@@ -115,15 +114,6 @@ class MessagesForwarder:
             return True
         return False
 
-    def _rreq_ttl_killer(self, target: Node, future: "Future[RRepInfo]") -> Callable[[], None]:
-        def callback() -> None:
-            futures = self.pending_requests.get(target, EMPTY_SET)
-            if future in futures:
-                futures.remove(future)
-            if not future.done():
-                future.set_exception(TimeoutError)
-        return callback
-
     def _done_request(self, target: Node) -> Callable[["Future[RRepInfo]"], None]:
         def callback(future: "Future[RRepInfo]") -> None:
             futures = self.pending_requests.get(target, EMPTY_SET)
@@ -143,3 +133,17 @@ class MessagesForwarder:
                 if neighbour != direction:
                     neighbour.send(response)
         return callback
+
+
+def set_ttl(future: Future, ttl: float) -> asyncio.TimerHandle:
+
+    def kill() -> None:
+        if not future.done():
+            return
+        future.set_exception(
+            TimeoutError(f"Future {future} killed due to TTL expiration.")
+        )
+
+    loop = asyncio.get_running_loop()
+    handle = loop.call_later(ttl, kill)
+    return handle
