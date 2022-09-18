@@ -18,16 +18,6 @@ CHACHA_NONCE_LENGTH = 12
 PUBKEY_LENGTH = 32
 SIGNATURE_LENGTH = 64
 
-TYPE_TO_LABEL: Dict[Type[NetworkMessage], bytes] = {
-    NetworkData: b"\x01",
-    RouteRequest: b"\x02",
-    RouteResponse: b"\x03",
-    RouteError: b"\x04"
-}
-LABEL_TO_TYPE: Dict[bytes, Type[NetworkMessage]] = {
-    label: type for type, label in TYPE_TO_LABEL.items()
-}
-
 Encoded = TypeVar("Encoded")
 
 
