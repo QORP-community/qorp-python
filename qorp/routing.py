@@ -71,18 +71,7 @@ class MessagesForwarder:
             direction = self.directions[target]
             direction.send(request)
         else:
-            requests = self.pending_requests.setdefault(target, set())
-            loop = asyncio.get_running_loop()
-            future: Future[RRepInfo] = loop.create_future()
-            future.add_done_callback(self._done_request(target))
-            set_ttl(future, RREQ_TIMEOUT)
-            self._requests_details[future] = request
-            requests.add(future)
-            if self.is_unique_rreq(request, exclude=future):
-                for neighbour in self.neighbours:
-                    if neighbour == source:
-                        continue
-                    neighbour.send(request)
+            self._propagate_rreq(source, request)
 
     def handle_rrep(self, source: Neighbour, response: RouteResponse) -> None:
         futures = self.pending_requests.get(response.source, EMPTY_SET)
@@ -102,6 +91,21 @@ class MessagesForwarder:
         self.routes.pop(route_pair)
         source_direction = directions[0]
         source_direction.send(error)
+
+    def _propagate_rreq(self, source: Neighbour, rreq: RouteRequest) -> None:
+        target = rreq.destination
+        requests = self.pending_requests.setdefault(target, set())
+        loop = asyncio.get_running_loop()
+        future: Future[RRepInfo] = loop.create_future()
+        future.add_done_callback(self._done_request(target))
+        set_ttl(future, RREQ_TIMEOUT)
+        self._requests_details[future] = rreq
+        requests.add(future)
+        if self.is_unique_rreq(rreq, exclude=future):
+            for neighbour in self.neighbours:
+                if neighbour == source:
+                    continue
+                neighbour.send(rreq)
 
     def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional["Future[RRepInfo]"] = None) -> bool:
         target = rreq.destination
