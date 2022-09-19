@@ -5,10 +5,10 @@ from unittest import TestCase
 from typing import Awaitable, Callable, TypeVar
 
 from qorp.codecs import CHACHA_NONCE_LENGTH, DEFAULT_CODEC
-from qorp.messages import NetworkData
+from qorp.messages import NetworkData, RouteRequest, RouteError
 from qorp.nodes import Neighbour
 from qorp.router import Router
-from qorp.encryption import Ed25519PrivateKey
+from qorp.encryption import Ed25519PrivateKey, X25519PrivateKey
 
 from tests.utils import RecorderFrontend, TestConnection, TestProtocol
 from tests.utils import NeignbourMock, RouterMock
@@ -82,3 +82,25 @@ class TestMessagesForwarder(TestCase):
                 "Forwarder does not reply with RouteError to message with "
                 "unknown source-destination pair."
             )
+
+    @as_sync
+    async def test_routerequest_propagation(self) -> None:
+        source = NeignbourMock()
+        destination = NeignbourMock()
+        neighbours = [NeignbourMock() for _ in range(5)]
+        self.forwarder.neighbours.update(neighbours)
+        rreq_direction, *neighbours = neighbours
+        privkey = X25519PrivateKey.generate()
+        rreq_pubkey = privkey.public_key()
+        rreq = RouteRequest(source, destination, rreq_pubkey)
+        rreq.sign(source.private_key)
+        self.forwarder.message_callback(rreq_direction, rreq)
+        for neighbour in neighbours:
+            self.assertIn(
+                rreq, neighbour.received,
+                "Forwarder does not relay RouteRequest to neighbour"
+            )
+        self.assertNotIn(
+            rreq, rreq_direction.received,
+            "Forwarder sends RouteRequest back to source"
+        )
