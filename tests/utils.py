@@ -32,6 +32,7 @@ class NeignbourMock(Neighbour):
             private_key = Ed25519PrivateKey.generate()
             public_key = private_key.public_key()
         super().__init__(public_key)
+        self.received = []
 
     def send(self, message: NetworkMessage) -> None:
         self.received.append(message)
@@ -49,6 +50,7 @@ class RouterMock(Router):
         forwarder_factory: Callable[[Router], MessagesForwarder] = MessagesForwarder
     ) -> None:
         super().__init__(private_key, frontend, frontend_factory, forwarder_factory)
+        self.received = []
 
     def send(self, message: Union[NetworkMessage, FrontendData]) -> None:
         self.received.append(message)
