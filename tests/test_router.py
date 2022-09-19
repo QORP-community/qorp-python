@@ -1,4 +1,8 @@
+import asyncio
+from functools import wraps
 from unittest import TestCase
+
+from typing import Awaitable, Callable, TypeVar
 
 from qorp.codecs import CHACHA_NONCE_LENGTH, DEFAULT_CODEC
 from qorp.messages import NetworkData
@@ -10,12 +14,28 @@ from tests.utils import RecorderFrontend, TestConnection, TestProtocol
 from tests.utils import NeignbourMock, RouterMock
 
 
+T = TypeVar("T")
+
+
+def as_sync(async_fn: Callable[..., Awaitable[T]]) -> Callable[..., T]:
+    @wraps(async_fn)
+    def synced(*args, **kwargs) -> T:
+        return asyncio.run(async_fn(*args, **kwargs))
+    return synced
+
+
 class TestMessagesForwarder(TestCase):
 
     def setUp(self) -> None:
         private_key = Ed25519PrivateKey.generate()
         self.router = RouterMock(private_key, frontend_factory=RecorderFrontend)
         self.forwarder = self.router.forwarder
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+
+    def tearDown(self) -> None:
+        self.loop.stop()
+        self.loop.close()
 
     def test_networkdata_forwarding(self) -> None:
         source = NeignbourMock()
