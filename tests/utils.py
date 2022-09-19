@@ -32,6 +32,7 @@ class NeignbourMock(Neighbour):
             private_key = Ed25519PrivateKey.generate()
             public_key = private_key.public_key()
         super().__init__(public_key)
+        self.private_key = private_key
         self.received = []
 
     def send(self, message: NetworkMessage) -> None:
