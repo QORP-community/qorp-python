@@ -70,7 +70,8 @@ class NetworkData(NetworkMessage):
 
     source: KnownNode
     destination: KnownNode
-    signature: bytes = field(init=False)
+    # TODO: do something with this source of bugs
+    signature: bytes = field(init=False, default=None)  # type: ignore
     nonce: bytes
     length: int
     payload: bytes
@@ -128,7 +129,8 @@ class RouteRequest(NetworkMessage):
     source: KnownNode
     destination: Union[Node, KnownNode]
     public_key: X25519PublicKey
-    signature: bytes = field(init=False)
+    # TODO: do something with this source of bugs
+    signature: bytes = field(init=False, default=None)  # type: ignore
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RouteRequest):
@@ -184,7 +186,8 @@ class RouteResponse(NetworkMessage):
     destination: KnownNode
     requester_key: X25519PublicKey  # to prevent replay attack in route search process
     public_key: X25519PublicKey
-    signature: bytes = field(init=False)
+    # TODO: do something with this source of bugs
+    signature: bytes = field(init=False, default=None)  # type: ignore
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RouteResponse):
@@ -237,7 +240,8 @@ class RouteError(NetworkMessage):
     destination: KnownNode
     route_source: KnownNode
     route_destination: KnownNode
-    signature: bytes = field(init=False)
+    # TODO: do something with this source of bugs
+    signature: bytes = field(init=False, default=None)  # type: ignore
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
         fields = [
