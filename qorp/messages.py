@@ -93,7 +93,7 @@ class NetworkData(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        if not hasattr(self, "signature"):
+        if getattr(self, "signature", None) is None:
             return False
         fields = [
             pubkey_to_bytes(self.source.public_key),
@@ -154,7 +154,7 @@ class RouteRequest(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        if not hasattr(self, "signature"):
+        if getattr(self, "signature", None) is None:
             return False
         from .nodes import KnownNode  # import here to avoid circular imports
         if isinstance(self.destination, KnownNode):
@@ -207,7 +207,7 @@ class RouteResponse(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        if not hasattr(self, "signature"):
+        if getattr(self, "signature", None) is None:
             return False
         fields = [
             pubkey_to_bytes(self.source.public_key),
@@ -250,7 +250,7 @@ class RouteError(NetworkMessage):
         self.signature = source_signing_key.sign(message)
 
     def verify(self) -> bool:
-        if not hasattr(self, "signature"):
+        if getattr(self, "signature", None) is None:
             return False
         fields = [
             pubkey_to_bytes(self.source.public_key),
