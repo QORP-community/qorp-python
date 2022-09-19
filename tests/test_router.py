@@ -35,7 +35,13 @@ class TestMessagesForwarder(TestCase):
         for msg in signed:
             msg.sign(source.private_key)
             self.forwarder.message_callback(source, msg)
-            self.assertIn(msg, msg.destination.received)
+            self.assertIn(
+                msg, msg.destination.received,
+                "Message did not forwarded to next hop"
+            )
         for msg in unsigned:
             self.forwarder.message_callback(source, msg)
-            self.assertNotIn(msg, msg.destination.received)
+            self.assertNotIn(
+                msg, msg.destination.received,
+                "Unsingned message forwarded to next hop"
+            )
