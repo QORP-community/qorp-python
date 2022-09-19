@@ -45,3 +45,20 @@ class TestMessagesForwarder(TestCase):
                 msg, msg.destination.received,
                 "Unsingned message forwarded to next hop"
             )
+
+    def test_routeerror_emit(self) -> None:
+        source = NeignbourMock()
+        destination = NeignbourMock()
+        nonce = b"\x00"*CHACHA_NONCE_LENGTH
+        destinations = destination, self.router
+        for dst in destinations:
+            msg = NetworkData(source, dst, nonce, 1, b"\x00")
+            msg.sign(source.private_key)
+            self.forwarder.message_callback(source, msg)
+            rerr = RouteError(self.router, source, source, dst)
+            rerr.sign(self.router.private_key)
+            self.assertIn(
+                rerr, source.received,
+                "Forwarder does not reply with RouteError to message with "
+                "unknown source-destination pair."
+            )
