@@ -95,6 +95,7 @@ class TestMessagesForwarder(TestCase):
         rreq_direction, *neighbours = neighbours
         privkey = X25519PrivateKey.generate()
         rreq_pubkey = privkey.public_key()
+        # TODO: Add special case - RReq to end of known route
         rreq = RouteRequest(source, destination, rreq_pubkey)
         rreq.sign(source.private_key)
         self.forwarder.message_callback(rreq_direction, rreq)
