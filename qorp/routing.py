@@ -101,7 +101,7 @@ class MessagesForwarder:
         loop = asyncio.get_running_loop()
         future: Future[RRepInfo] = loop.create_future()
         future.add_done_callback(self._done_request(target))
-        set_ttl(future, self.RREQ_TIMEOUT)
+        set_ttl(future, self.RREQ_TIMEOUT, self._forgot_rreq(rreq))
         self._requests_details[future] = rreq
         requests.add(future)
         if self.is_unique_rreq(rreq, exclude=future):
