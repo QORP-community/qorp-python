@@ -130,8 +130,35 @@ class TestMessagesForwarder(TestCase):
         # TODO: Decide is this normal that rreq_other_directions handles RReq
         #       coming from rreq_direction
 
-    def test_routerequest_responding(self) -> None:
-        pass
+    @as_sync
+    async def test_routerequest_responding(self) -> None:
+        source = NeignbourMock()
+        destination = NeignbourMock()
+        neighbours = [NeignbourMock() for _ in range(5)]
+        self.forwarder.neighbours.update(neighbours)
+        rreq_direction, *neighbours = neighbours
+        rrep_direction, *rrep_receivers = neighbours
+        rreq_privkey = X25519PrivateKey.generate()
+        rreq_pubkey = rreq_privkey.public_key()
+        rrep_privkey = X25519PrivateKey.generate()
+        rrep_pubkey = rrep_privkey.public_key()
+        # TODO: Add special case - RReq to end of known route
+        rreq = RouteRequest(source, destination, rreq_pubkey)
+        rreq.sign(source.private_key)
+        self.forwarder.message_callback(rreq_direction, rreq)
+        rrep = RouteResponse(destination, source, rreq_pubkey, rrep_pubkey)
+        rrep.sign(destination.private_key)
+        self.forwarder.message_callback(rrep_direction, rrep)
+        await asyncio.sleep(0.5)
+        for receiver in rrep_receivers:
+            self.assertIn(
+                rrep, receiver.received,
+                "Forwarder does not relay RouteResponse to requester"
+            )
+        self.assertNotIn(
+            rrep, rrep_direction.received,
+            "RouteResponse forwarded back to sender"
+        )
 
     def test_routeresponse_propagation(self) -> None:
         pass
