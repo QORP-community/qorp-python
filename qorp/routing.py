@@ -17,7 +17,6 @@ from .transports import Connection
 
 RRepInfo = Tuple[Neighbour, RouteResponse]
 
-RREQ_TIMEOUT: float = 10
 EMPTY_SET: Set[Future[RRepInfo]] = set()
 
 
@@ -30,6 +29,7 @@ class MessagesForwarder:
     directions: Dict[KnownNode, Neighbour]
     pending_requests: Dict[Node, Set[Future[RRepInfo]]]
     _requests_details: WeakKeyDictionary[Future[RRepInfo], RouteRequest]
+    RREQ_TIMEOUT: float = 10
 
     def __init__(self, router: Router) -> None:
         self.router = router
@@ -101,7 +101,7 @@ class MessagesForwarder:
         loop = asyncio.get_running_loop()
         future: Future[RRepInfo] = loop.create_future()
         future.add_done_callback(self._done_request(target))
-        set_ttl(future, RREQ_TIMEOUT)
+        set_ttl(future, self.RREQ_TIMEOUT)
         self._requests_details[future] = rreq
         requests.add(future)
         if self.is_unique_rreq(rreq, exclude=future):
