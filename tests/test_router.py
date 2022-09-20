@@ -6,7 +6,7 @@ from typing import Callable, Coroutine, TypeVar
 from typing_extensions import ParamSpec
 
 from qorp.codecs import CHACHA_NONCE_LENGTH, DEFAULT_CODEC
-from qorp.messages import NetworkData, RouteRequest, RouteError
+from qorp.messages import NetworkData, RouteRequest, RouteError, RouteResponse
 from qorp.nodes import Neighbour
 from qorp.router import Router
 from qorp.encryption import Ed25519PrivateKey
@@ -134,6 +134,30 @@ class TestMessagesForwarder(TestCase):
     async def test_routerequest_responding(self) -> None:
         source = NeignbourMock()
         destination = NeignbourMock()
+        neighbours = [NeignbourMock() for _ in range(2)]
+        self.forwarder.neighbours.update(neighbours)
+        rreq_direction, rrep_direction = neighbours
+        rreq_privkey = X25519PrivateKey.generate()
+        rreq_pubkey = rreq_privkey.public_key()
+        rrep_privkey = X25519PrivateKey.generate()
+        rrep_pubkey = rrep_privkey.public_key()
+        # TODO: Add special case - RReq to end of known route
+        rreq = RouteRequest(source, destination, rreq_pubkey)
+        rreq.sign(source.private_key)
+        self.forwarder.message_callback(rreq_direction, rreq)
+        rrep = RouteResponse(destination, source, rreq_pubkey, rrep_pubkey)
+        rrep.sign(destination.private_key)
+        self.forwarder.message_callback(rrep_direction, rrep)
+        await asyncio.sleep(0.5)
+        self.assertIn(
+            rrep, rreq_direction.received,
+            "Forwarder does not relay RouteResponse to requester"
+        )
+
+    @as_sync
+    async def test_routeresponse_propagation(self) -> None:
+        source = NeignbourMock()
+        destination = NeignbourMock()
         neighbours = [NeignbourMock() for _ in range(5)]
         self.forwarder.neighbours.update(neighbours)
         rreq_direction, *neighbours = neighbours
@@ -159,9 +183,6 @@ class TestMessagesForwarder(TestCase):
             rrep, rrep_direction.received,
             "RouteResponse forwarded back to sender"
         )
-
-    def test_routeresponse_propagation(self) -> None:
-        pass
 
     def test_routeerror_fetch(self) -> None:
         pass
