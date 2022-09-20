@@ -17,7 +17,7 @@ from .transports import Connection
 
 RRepInfo = Tuple[Neighbour, RouteResponse]
 
-RREQ_TIMEOUT = 10
+RREQ_TIMEOUT: float = 10
 EMPTY_SET: Set[Future[RRepInfo]] = set()
 
 
