@@ -190,5 +190,23 @@ class TestMessagesForwarder(TestCase):
     def test_routeerror_propagation(self) -> None:
         pass
 
-    def test_rreq_ttl_kill(self) -> None:
-        pass
+    @as_sync
+    async def test_rreq_ttl_kill(self) -> None:
+        TEST_TIMEOUT = 0.1
+        self.forwarder.RREQ_TIMEOUT = TEST_TIMEOUT
+        source = NeignbourMock()
+        destination = NeignbourMock()
+        neighbours = [NeignbourMock() for _ in range(5)]
+        self.forwarder.neighbours.update(neighbours)
+        rreq_direction, *neighbours = neighbours
+        privkey = X25519PrivateKey.generate()
+        rreq_pubkey = privkey.public_key()
+        # TODO: Add special case - RReq to end of known route
+        rreq = RouteRequest(source, destination, rreq_pubkey)
+        rreq.sign(source.private_key)
+        self.forwarder.message_callback(rreq_direction, rreq)
+        await asyncio.sleep(TEST_TIMEOUT*10)
+        self.assertNotIn(
+            destination, self.forwarder.pending_requests,
+            "Forwader does not delete RouteRequest"
+        )
