@@ -11,10 +11,7 @@ from typing import Optional, Union
 from .encryption import Ed25519PrivateKey, X25519PublicKey, ChaCha20Poly1305
 from .encryption import InvalidSignature
 from .encryption import pubkey_to_bytes
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from .nodes import KnownNode, Node
+from .nodes import KnownNode, Node
 
 
 @dataclass  # type: ignore  # (due to mypy issue #5374)
@@ -142,7 +139,6 @@ class RouteRequest(NetworkMessage):
         ))
 
     def sign(self, source_signing_key: Ed25519PrivateKey) -> None:
-        from .nodes import KnownNode  # import here to avoid circular imports
         if isinstance(self.destination, KnownNode):
             dst_field = pubkey_to_bytes(self.destination.public_key)
         else:
@@ -158,7 +154,6 @@ class RouteRequest(NetworkMessage):
     def verify(self) -> bool:
         if getattr(self, "signature", None) is None:
             return False
-        from .nodes import KnownNode  # import here to avoid circular imports
         if isinstance(self.destination, KnownNode):
             dst_field = pubkey_to_bytes(self.destination.public_key)
         else:
