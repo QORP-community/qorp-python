@@ -111,7 +111,24 @@ class TestMessagesForwarder(TestCase):
 
     @as_sync
     async def test_routerequest_deduplication(self) -> None:
-        pass
+        source = NeignbourMock()
+        destination = NeignbourMock()
+        neighbours = [NeignbourMock() for _ in range(5)]
+        self.forwarder.neighbours.update(neighbours)
+        rreq_direction, rreq_other_direction, *neighbours = neighbours
+        privkey = X25519PrivateKey.generate()
+        rreq_pubkey = privkey.public_key()
+        rreq = RouteRequest(source, destination, rreq_pubkey)
+        rreq.sign(source.private_key)
+        self.forwarder.message_callback(rreq_direction, rreq)
+        self.forwarder.message_callback(rreq_other_direction, rreq)
+        for neighbour in neighbours:
+            self.assertEqual(
+                neighbour.received.count(rreq), 1,
+                "Forwarder duplicates RouteRequest"
+            )
+        # TODO: Decide is this normal that rreq_other_directions handles RReq
+        #       coming from rreq_direction
 
     def test_routerequest_responding(self) -> None:
         pass
