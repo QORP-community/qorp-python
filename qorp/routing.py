@@ -59,6 +59,7 @@ class MessagesForwarder:
         directions = self.routes.get(route_pair)
         if directions is None:
             rerr = RouteError(self.router, source, *route_pair)
+            rerr.sign(self.router.private_key)
             source.send(rerr)
             return
         source_direction, destination_direction = directions
