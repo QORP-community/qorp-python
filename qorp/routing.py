@@ -75,13 +75,15 @@ class MessagesForwarder:
 
     def handle_rrep(self, source: Neighbour, response: RouteResponse) -> None:
         futures = self.pending_requests.get(response.source, EMPTY_SET)
+        to_remove = set()
         for future in futures:
             rreq = self._requests_details.get(future)
             if rreq is None or rreq.public_key != response.requester_key:
                 # response not for this request
                 continue
-            futures.remove(future)
+            to_remove.add(future)
             future.set_result((source, response))
+        futures.difference_update(to_remove)
 
     def handle_rerr(self, source: Neighbour, error: RouteError) -> None:
         route_pair = error.route_source, error.route_destination
