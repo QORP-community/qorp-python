@@ -142,9 +142,18 @@ class MessagesForwarder:
         return callback
 
 
-def set_ttl(future: Future, ttl: float) -> asyncio.TimerHandle:
+T = TypeVar("T")
+
+
+def set_ttl(
+    future: Future[T],
+    ttl: float,
+    callback: Optional[Callable[[Future[T]], None]] = None
+) -> asyncio.TimerHandle:
 
     def kill() -> None:
+        if callback is not None:
+            callback(future)
         if not future.done():
             return
         future.set_exception(
