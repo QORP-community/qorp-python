@@ -110,6 +110,18 @@ class MessagesForwarder:
                     continue
                 neighbour.send(rreq)
 
+    def _forgot_rreq(
+        self, rreq: RouteRequest
+    ) -> Callable[[Future[RRepInfo]], None]:
+        def callback(future: Future[RRepInfo]) -> None:
+            target = rreq.destination
+            futures = self.pending_requests.get(target, EMPTY_SET)
+            if future in futures:
+                futures.remove(future)
+                if not futures:
+                    self.pending_requests.pop(target)
+        return callback
+
     def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional["Future[RRepInfo]"] = None) -> bool:
         target = rreq.destination
         requests = self.pending_requests.get(target)
