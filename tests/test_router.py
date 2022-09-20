@@ -2,24 +2,27 @@ import asyncio
 from functools import wraps
 from unittest import TestCase
 
-from typing import Awaitable, Callable, TypeVar
+from typing import Callable, Coroutine, TypeVar
+from typing_extensions import ParamSpec
 
 from qorp.codecs import CHACHA_NONCE_LENGTH, DEFAULT_CODEC
 from qorp.messages import NetworkData, RouteRequest, RouteError
 from qorp.nodes import Neighbour
 from qorp.router import Router
-from qorp.encryption import Ed25519PrivateKey, X25519PrivateKey
+from qorp.encryption import Ed25519PrivateKey
+from qorp.encryption import X25519PrivateKey
 
 from tests.utils import RecorderFrontend, TestConnection, TestProtocol
 from tests.utils import NeignbourMock, RouterMock
 
 
 T = TypeVar("T")
+P = ParamSpec("P")
 
 
-def as_sync(async_fn: Callable[..., Awaitable[T]]) -> Callable[..., T]:
+def as_sync(async_fn: Callable[P, Coroutine[None, None, T]]) -> Callable[P, T]:
     @wraps(async_fn)
-    def synced(*args, **kwargs) -> T:
+    def synced(*args: P.args, **kwargs: P.kwargs) -> T:
         return asyncio.run(async_fn(*args, **kwargs))
     return synced
 
