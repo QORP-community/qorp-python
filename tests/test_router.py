@@ -107,3 +107,22 @@ class TestMessagesForwarder(TestCase):
             rreq, rreq_direction.received,
             "Forwarder sends RouteRequest back to source"
         )
+
+    @as_sync
+    async def test_routerequest_deduplication(self) -> None:
+        pass
+
+    def test_routerequest_responding(self) -> None:
+        pass
+
+    def test_routeresponse_propagation(self) -> None:
+        pass
+
+    def test_routeerror_fetch(self) -> None:
+        pass
+
+    def test_routeerror_propagation(self) -> None:
+        pass
+
+    def test_rreq_ttl_kill(self) -> None:
+        pass
