@@ -87,13 +87,15 @@ class MessagesForwarder:
         futures.difference_update(to_remove)
 
     def handle_rerr(self, source: Neighbour, error: RouteError) -> None:
-        route_pair = error.route_source, error.route_destination
+        src, dst = error.route_source, error.route_destination
+        route_pair = (src, dst)
         directions = self.routes.get(route_pair)
-        if not directions or directions[1] != source:
-            return
-        self.routes.pop(route_pair)
-        source_direction = directions[0]
-        source_direction.send(error)
+        if directions and directions[1] == source:
+            self.routes.pop(route_pair)
+            source_direction = directions[0]
+            source_direction.send(error)
+            if self.routes.get((dst, src)):
+                self.routes.pop((dst, src))
 
     def _propagate_rreq(self, source: Neighbour, rreq: RouteRequest) -> None:
         target = rreq.destination
