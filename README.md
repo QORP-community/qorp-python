@@ -15,6 +15,7 @@
   - [From sources](#from-sources)
 - [Launch tests](#launch-tests)
 - [About QORP](#about-qorp)
+  - [Docs](#docs)
 
 ## Installation
 
@@ -41,3 +42,9 @@ python -m tests
 ## About QORP
 
 QORP (Quite Ok Routing Protocol) is simple reactive dynamic routing protocol with E2E encryption.
+
+### Docs
+
+Partial documentation for protocol and implementation located in [/docs](./docs) directory.
+
+Better to introduce from [/docs/README.md](./docs/REAMDE.md).
