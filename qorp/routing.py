@@ -4,7 +4,7 @@ import asyncio
 from asyncio import Future
 from weakref import WeakKeyDictionary
 
-from typing import Callable, Dict, Optional, Set, Tuple
+from typing import Callable, Dict, Optional, Set, Tuple, TypeVar
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .router import Router
