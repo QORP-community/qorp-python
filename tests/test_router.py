@@ -202,7 +202,7 @@ class TestMessagesForwarder(TestCase):
             self.forwarder.message_callback(rnd_source, msg)
         routes = (source, destination), (destination, source)
         for route in routes:
-        self.assertIn(
+            self.assertIn(
                 route, self.forwarder.routes,
                 "Forwarder removes route after handles RouteError from node "
                 "which is not a route participant."
@@ -211,7 +211,7 @@ class TestMessagesForwarder(TestCase):
         rerr.sign(source.private_key)
         self.forwarder.message_callback(source, rerr)
         for route in routes:
-        self.assertNotIn(
+            self.assertNotIn(
                 route, self.forwarder.routes,
                 "Forwarder does not remove route after handles RouteError "
                 "from node which is not a route participant."
