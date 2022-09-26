@@ -124,7 +124,9 @@ class MessagesForwarder:
                     self.pending_requests.pop(target)
         return callback
 
-    def is_unique_rreq(self, rreq: RouteRequest, exclude: Optional[Future[RRepInfo]] = None) -> bool:
+    def is_unique_rreq(
+        self, rreq: RouteRequest, exclude: Optional[Future[RRepInfo]] = None
+    ) -> bool:
         target = rreq.destination
         requests = self.pending_requests.get(target)
         if not requests:
@@ -135,7 +137,9 @@ class MessagesForwarder:
             return True
         return False
 
-    def _done_request(self, target: Node) -> Callable[[Future[RRepInfo]], None]:
+    def _done_request(
+        self, target: Node
+    ) -> Callable[[Future[RRepInfo]], None]:
         def callback(future: Future[RRepInfo]) -> None:
             futures = self.pending_requests.get(target, EMPTY_SET)
             if future in futures:
