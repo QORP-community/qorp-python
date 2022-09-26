@@ -200,29 +200,22 @@ class TestMessagesForwarder(TestCase):
         for msg in ignored:
             msg.sign(rnd_source.private_key)
             self.forwarder.message_callback(rnd_source, msg)
+        routes = (source, destination), (destination, source)
+        for route in routes:
         self.assertIn(
-            (source, destination), self.forwarder.routes,
-            "Forwarder removes route after handles RouteError from node which "
-            "is not a route participant."
-        )
-        self.assertIn(
-            (destination, source), self.forwarder.routes,
-            "Forwarder removes route after handles RouteError from node which "
-            "is not a route participant."
-        )
+                route, self.forwarder.routes,
+                "Forwarder removes route after handles RouteError from node "
+                "which is not a route participant."
+            )
         rerr = RouteError(source, destination, source, destination)
         rerr.sign(source.private_key)
         self.forwarder.message_callback(source, rerr)
+        for route in routes:
         self.assertNotIn(
-            (source, destination), self.forwarder.routes,
-            "Forwarder does not remove route after handles RouteError from "
-            "node which is not a route participant."
-        )
-        self.assertNotIn(
-            (destination, source), self.forwarder.routes,
-            "Forwarder does not remove route after handles RouteError from "
-            "node which is not a route participant."
-        )
+                route, self.forwarder.routes,
+                "Forwarder does not remove route after handles RouteError "
+                "from node which is not a route participant."
+            )
 
     def test_routeerror_propagation(self) -> None:
         pass
