@@ -185,7 +185,44 @@ class TestMessagesForwarder(TestCase):
         )
 
     def test_routeerror_fetch(self) -> None:
-        pass
+        # TODO: add separate route directions nodes (for src and dst)
+        source = NeignbourMock()
+        destination = NeignbourMock()
+        rnd_source = NeignbourMock()
+        rnd_destination = NeignbourMock()
+        self.forwarder.routes[(source, destination)] = (source, destination)
+        self.forwarder.routes[(destination, source)] = (destination, source)
+        ignored = [
+            RouteError(rnd_source, rnd_destination, rnd_source, destination),
+            RouteError(rnd_source, destination, source, destination)
+            # TODO: add all cases of ignored RouteError messages
+        ]
+        for msg in ignored:
+            msg.sign(rnd_source.private_key)
+            self.forwarder.message_callback(rnd_source, msg)
+        self.assertIn(
+            (source, destination), self.forwarder.routes,
+            "Forwarder removes route after handles RouteError from node which "
+            "is not a route participant."
+        )
+        self.assertIn(
+            (destination, source), self.forwarder.routes,
+            "Forwarder removes route after handles RouteError from node which "
+            "is not a route participant."
+        )
+        rerr = RouteError(source, destination, source, destination)
+        rerr.sign(source.private_key)
+        self.forwarder.message_callback(source, rerr)
+        self.assertNotIn(
+            (source, destination), self.forwarder.routes,
+            "Forwarder does not remove route after handles RouteError from "
+            "node which is not a route participant."
+        )
+        self.assertNotIn(
+            (destination, source), self.forwarder.routes,
+            "Forwarder does not remove route after handles RouteError from "
+            "node which is not a route participant."
+        )
 
     def test_routeerror_propagation(self) -> None:
         pass
