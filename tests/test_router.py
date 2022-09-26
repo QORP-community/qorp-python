@@ -214,7 +214,7 @@ class TestMessagesForwarder(TestCase):
             self.assertNotIn(
                 route, self.forwarder.routes,
                 "Forwarder does not remove route after handles RouteError "
-                "from node which is not a route participant."
+                "from a route participant."
             )
 
     def test_routeerror_propagation(self) -> None:
