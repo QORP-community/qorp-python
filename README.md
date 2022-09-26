@@ -47,4 +47,4 @@ QORP (Quite Ok Routing Protocol) is simple reactive dynamic routing protocol wit
 
 Partial documentation for protocol and implementation located in [/docs](./docs) directory.
 
-Better to introduce from [/docs/README.md](./docs/REAMDE.md).
+Better to introduce from [/docs/README.md](./docs/README.md).
