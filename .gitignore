@@ -130,3 +130,7 @@ dmypy.json
 
 # Direnv
 .direnv/
+
+.gitignore
+.vscode
+/linecount
