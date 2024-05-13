@@ -27,7 +27,7 @@ class NeignbourMock(Neighbour):
 
     received: List[NetworkMessage]
 
-    def __init__(self, public_key: Ed25519PublicKey = None):
+    def __init__(self, public_key: Ed25519PublicKey | None = None):
         if public_key is None:
             private_key = Ed25519PrivateKey.generate()
             public_key = private_key.public_key()
@@ -46,8 +46,8 @@ class RouterMock(Router):
     def __init__(
         self,
         private_key: Ed25519PrivateKey,
-        frontend: Frontend = None,
-        frontend_factory: Callable[[Router], Frontend] = None,
+        frontend: Frontend | None = None,
+        frontend_factory: Callable[[Router], Frontend] | None = None,
         forwarder_factory: Callable[[Router], MessagesForwarder] = MessagesForwarder
     ) -> None:
         super().__init__(private_key, frontend, frontend_factory, forwarder_factory)

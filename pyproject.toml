@@ -1,24 +1,35 @@
 [tool.poetry]
-name = "qorp"
-version = "0.0.1"
-description = "QORP implementation written in python."
-readme = "README.md"
-authors = ["jorektheglitch <jorektheglitch@yandex.ru>"]
-license = "MIT"
-repository = "https://github.com/jorektheglitch/qorp-python"
-classifiers = [
-    "Development Status :: 1 - Planning",
-    "Topic :: Internet",
-    "Topic :: System :: Networking"
-]
+    name = "qorp"
+    version = "0.0.1"
+    description = "QORP implementation written in python."
+    readme = "README.md"
+    authors = ["jorektheglitch <jorektheglitch@yandex.ru>"]
+    license = "MIT"
+    repository = "https://github.com/jorektheglitch/qorp-python"
+    classifiers = [
+        "Development Status :: 1 - Planning",
+        "Topic :: Internet",
+        "Topic :: System :: Networking"
+    ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-cryptography = "^37"
-typing-extensions = "^4.3.0"
+    python = "^3.7"
+    cryptography = "^37"
+    typing-extensions = "^4.3.0"
 
 [tool.poetry.dev-dependencies]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+    requires = ["poetry-core>=1.0.0"]
+    build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+    disallow_any_explicit = true
+    disallow_any_generics = true
+    disallow_subclassing_any = true
+    disallow_untyped_defs = true
+    check_untyped_defs = true
+    warn_unused_ignores = true
+    warn_return_any = true
+    warn_unreachable = true
+    pretty = true

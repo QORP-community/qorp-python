@@ -27,6 +27,27 @@ def as_sync(async_fn: Callable[P, Coroutine[None, None, T]]) -> Callable[P, T]:
     return synced
 
 
+def get_test_router() -> Router:
+    private_key = Ed25519PrivateKey.generate()
+    router = Router(private_key, frontend_factory=RecorderFrontend)
+    return router
+
+
+def link_routers(first: Router, second: Router) -> None:
+    first_neighbour = Neighbour(first.public_key)
+    first_proto = TestProtocol()
+    first_neighbour_conn = TestConnection(first_proto, DEFAULT_CODEC, 0.01)
+    first_neighbour.connections.append(first_neighbour_conn)
+    second_neighbour = Neighbour(second.public_key)
+    second_proto = TestProtocol()
+    second_neighbour_conn = TestConnection(second_proto, DEFAULT_CODEC, 0.01)
+    second_neighbour.connections.append(second_neighbour_conn)
+    first_proto.address = second_neighbour_conn
+    second_proto.address = first_neighbour_conn
+    first.forwarder.neighbours.add(second_neighbour)
+    second.forwarder.neighbours.add(first_neighbour)
+
+
 class TestMessagesForwarder(TestCase):
 
     def setUp(self) -> None:
@@ -243,3 +264,17 @@ class TestMessagesForwarder(TestCase):
             destination, self.forwarder.pending_requests,
             "Forwader does not delete RouteRequest"
         )
+
+
+class TestRouter(TestCase):
+
+    def setUp(self) -> None:
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+
+    def tearDown(self) -> None:
+        self.loop.stop()
+        self.loop.close()
+
+    def test_init_network(self) -> None:
+        pass

@@ -32,8 +32,8 @@ class Router(Neighbour):
     def __init__(
         self,
         private_key: Ed25519PrivateKey,
-        frontend: Frontend = None,
-        frontend_factory: Callable[[Router], Frontend] = None,
+        frontend: Frontend | None = None,
+        frontend_factory: Callable[[Router], Frontend] | None = None,
         forwarder_factory: Callable[[Router], MessagesForwarder] = MessagesForwarder
     ) -> None:
         self.private_key = private_key

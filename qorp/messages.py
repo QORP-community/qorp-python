@@ -14,7 +14,7 @@ from .encryption import pubkey_to_bytes
 from .nodes import KnownNode, Node
 
 
-@dataclass  # type: ignore  # (due to mypy issue #5374)
+@dataclass
 class Message(ABC):
     """
     Base class for all protocol messages.
@@ -35,7 +35,7 @@ class FrontendData(Message):
     signature: Optional[bytes] = field(init=False, default=None)
 
 
-@dataclass  # type: ignore  # (due to mypy issue #5374)
+@dataclass
 class NetworkMessage(Message, ABC):
 
     @property
